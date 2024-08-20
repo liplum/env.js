@@ -39,6 +39,7 @@ export class EnvVarValue {
     return parseFloat(this.value)
   }
   bool = () => {
+    // TODO: improve this behavior
     return Boolean(this.value)
   }
   json = () => {
