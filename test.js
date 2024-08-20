@@ -1,3 +1,4 @@
+import test from 'ava'
 import env from "./dist/index.js"
 
 const defaultStringValue = env("ENV_TEST_STRING")
