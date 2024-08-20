@@ -47,7 +47,7 @@ class EnvVarImpl implements EnvVar {
   }
 
   get = (): EnvVarValue => {
-    const store = this.store ? this.store  : process.env
+    const store = this.store ? this.store : process.env
     const value = store[this.key] ?? this.defaultValue
     if (value === undefined) {
       throw new Error(`Environment variable "${this.key}" not undefined.`)
@@ -93,6 +93,13 @@ class EnvVarValueImpl implements EnvVarValue {
   }
   json = () => {
     return JSON.parse(this.safeValue)
+  }
+  /**
+   * Dangerous!
+   * @returns 
+   */
+  eval = () => {
+    return eval(this.safeValue)
   }
   /**
    * @param splitter By default, it splits a string by white space, new line and comma.

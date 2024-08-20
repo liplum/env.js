@@ -61,3 +61,13 @@ test("json string", t=>{
   .get()
   t.assert(v.json().name === "@liplum/env")
 })
+
+
+test("eval string", t=>{
+  const v = env("ENV_TEST")
+  .from({
+    "ENV_TEST" : "1+1"
+  })
+  .get()
+  t.assert(v.eval() === 2)
+})
