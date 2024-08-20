@@ -48,3 +48,16 @@ test("custom env store", t=>{
   .get()
   t.assert(v.string() === "test")
 })
+
+test("json string", t=>{
+  const v = env("ENV_TEST")
+  .from({
+    "ENV_TEST" : `
+  {
+    "name": "@liplum/env"  
+  }
+    `
+  })
+  .get()
+  t.assert(v.json().name === "@liplum/env")
+})
