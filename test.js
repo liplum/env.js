@@ -39,3 +39,12 @@ test("default array by new line", t=>{
   .get()
   t.assert(v.array().toString() === ["t1","t2","t3"].toString())
 })
+
+test("custom env store", t=>{
+  const v = env("ENV_TEST")
+  .from({
+    "ENV_TEST" : "test"
+  })
+  .get()
+  t.assert(v.string() === "test")
+})

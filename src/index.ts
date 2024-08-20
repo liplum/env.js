@@ -1,59 +1,54 @@
+export type EnvStore = typeof process.env | Record<string, string | undefined>
 export interface EnvVar {
   readonly key: string
   default: (defaultValue: string) => EnvVar
-  optional: () => EnvVar
-  required: () => EnvVar
+  from: (store: EnvStore) => EnvVar
   get: () => EnvVarValue
 }
 class EnvVarImpl implements EnvVar {
   readonly key: string
   readonly defaultValue?: string
-  readonly isOptional: boolean
+  readonly store?: EnvStore
   constructor({
-    key, defaultValue, isOptional = false
+    key, defaultValue, store
   }: {
     key: string
     defaultValue?: string
-    isOptional?: boolean
+    store?: EnvStore
   }) {
     this.key = key
     this.defaultValue = defaultValue
-    this.isOptional = isOptional
+    this.store = store
   }
 
   copyWith = ({
-    defaultValue, isOptional
+    defaultValue, store
   }: {
     defaultValue?: string
-    isOptional?: boolean
-  }) => {
+    store?: EnvStore
+  }): EnvVar => {
     return new EnvVarImpl({
       key: this.key,
       defaultValue: defaultValue ?? this.defaultValue,
-      isOptional: isOptional ?? this.isOptional,
+      store: store ?? this.store,
     })
   }
 
-  default = (defaultValue: string): EnvVarImpl => {
+  default = (defaultValue: string): EnvVar => {
     return this.copyWith({
       defaultValue,
     })
   }
 
-  optional = (): EnvVarImpl => {
+  from = (store: EnvStore): EnvVar => {
     return this.copyWith({
-      isOptional: true,
+      store,
     })
   }
 
-  required = (): EnvVarImpl => {
-    return this.copyWith({
-      isOptional: false,
-    })
-  }
-
-  get = (): EnvVarValueImpl => {
-    const value = process.env[this.key] ?? this.defaultValue
+  get = (): EnvVarValue => {
+    const store = this.store ? this.store  : process.env
+    const value = store[this.key] ?? this.defaultValue
     if (value === undefined) {
       throw new Error(`Environment variable "${this.key}" not undefined.`)
     }
