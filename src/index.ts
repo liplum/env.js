@@ -3,7 +3,7 @@ export interface EnvVar {
   readonly key: string
   default: (defaultValue: string) => EnvVar
   from: (store: EnvStore) => EnvVar
-  get: () => EnvVarValue
+  end: () => EnvVarValue
 }
 class EnvVarImpl implements EnvVar {
   readonly key: string
@@ -46,37 +46,40 @@ class EnvVarImpl implements EnvVar {
     })
   }
 
-  get = (): EnvVarValue => {
-    const store = this.store ? this.store : process.env
-    const value = store[this.key] ?? this.defaultValue
-    if (value === undefined) {
-      throw new Error(`Environment variable "${this.key}" not undefined.`)
-    }
-    return new EnvVarValueImpl(this, value)
+  end = (): EnvVarValue => {
+    return new EnvVarValueImpl(this)
   }
 }
 export interface EnvVarValue {
-  readonly value?: string
+  raw: () => string | undefined
   string: () => string
   int: (radix?: number) => number
   float: () => number
   bool: () => boolean
   json: () => any
+  eval: () => any
   array: () => string[]
   port: () => number
 }
 class EnvVarValueImpl implements EnvVarValue {
   readonly parent: EnvVarImpl
-  readonly value?: string
-  constructor(parent: EnvVarImpl, value?: string) {
+  constructor(parent: EnvVarImpl) {
     this.parent = parent
-    this.value = value
   }
+
+  raw = (): string | undefined => {
+    const parent = this.parent
+    const store = parent.store ? parent.store : process.env
+    const value = store[parent.key] ?? parent.defaultValue
+    return value
+  }
+
   get safeValue(): string {
-    if (this.value === undefined) {
-      throw new Error(`"${this.parent.key}" is required but no value given.`)
+    const value = this.raw()
+    if (value === undefined) {
+      throw new Error(`Missing the environment variable "${this.parent.key}".`)
     }
-    return this.value
+    return value
   }
   string = () => {
     return this.safeValue
@@ -89,7 +92,7 @@ class EnvVarValueImpl implements EnvVarValue {
   }
   bool = () => {
     // TODO: improve this behavior
-    return Boolean(this.value)
+    return Boolean(this.raw)
   }
   json = () => {
     return JSON.parse(this.safeValue)
