@@ -45,11 +45,12 @@ export class EnvVarValue {
     return JSON.parse(this.value)
   }
   /**
-   * @param splitter By default, it splits a string on any combination of whitespace, optional commas surrounded by whitespace, or multiple consecutive whitespace characters globally.
+   * @param splitter By default, it splits a string by white space, new line and comma.
    * @returns 
    */
-  array = (splitter: string | RegExp = /\s*,?\s*|\s+/g): string[] => {
-    return this.value.split(splitter)
+  array = (splitter: string | RegExp = /\s|,|\r|\n|\r\n/): string[] => {
+    const vars = this.value.split(splitter)
+    return vars.filter(v => Boolean(v))
   }
   port = () => {
     const p = parseInt(this.value)
