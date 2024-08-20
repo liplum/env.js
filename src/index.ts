@@ -1,4 +1,11 @@
-export class EnvVar {
+export interface EnvVar {
+  readonly key: string
+  default: (defaultValue: string) => EnvVar
+  optional: () => EnvVar
+  required: () => EnvVar
+  get: () => EnvVarValue
+}
+class EnvVarImpl implements EnvVar {
   readonly key: string
   readonly defaultValue?: string
   readonly isOptional: boolean
@@ -14,42 +21,59 @@ export class EnvVar {
     this.isOptional = isOptional
   }
 
-  default = (defaultValue: string): EnvVar => {
-    return new EnvVar({
+  copyWith = ({
+    defaultValue, isOptional
+  }: {
+    defaultValue?: string
+    isOptional?: boolean
+  }) => {
+    return new EnvVarImpl({
       key: this.key,
-      defaultValue,
-      isOptional: this.isOptional,
+      defaultValue: defaultValue ?? this.defaultValue,
+      isOptional: isOptional ?? this.isOptional,
     })
   }
 
-  optional = (): EnvVar => {
-    return new EnvVar({
-      key: this.key,
-      defaultValue: this.defaultValue,
+  default = (defaultValue: string): EnvVarImpl => {
+    return this.copyWith({
+      defaultValue,
+    })
+  }
+
+  optional = (): EnvVarImpl => {
+    return this.copyWith({
       isOptional: true,
     })
   }
 
-  required = (): EnvVar => {
-    return new EnvVar({
-      key: this.key,
-      defaultValue: this.defaultValue,
+  required = (): EnvVarImpl => {
+    return this.copyWith({
       isOptional: false,
     })
   }
 
-  get = (): EnvVarValue => {
+  get = (): EnvVarValueImpl => {
     const value = process.env[this.key] ?? this.defaultValue
     if (value === undefined) {
       throw new Error(`Environment variable "${this.key}" not undefined.`)
     }
-    return new EnvVarValue(this, value)
+    return new EnvVarValueImpl(this, value)
   }
 }
-export class EnvVarValue {
-  readonly parent: EnvVar
+export interface EnvVarValue {
   readonly value?: string
-  constructor(parent: EnvVar, value?: string) {
+  string: () => string
+  int: (radix?: number) => number
+  float: () => number
+  bool: () => boolean
+  json: () => any
+  array: () => string[]
+  port: () => number
+}
+class EnvVarValueImpl implements EnvVarValue {
+  readonly parent: EnvVarImpl
+  readonly value?: string
+  constructor(parent: EnvVarImpl, value?: string) {
     this.parent = parent
     this.value = value
   }
@@ -59,31 +83,31 @@ export class EnvVarValue {
     }
     return this.value
   }
-  string = (): string => {
+  string = () => {
     return this.safeValue
   }
-  int = (radix?: number): number => {
+  int = (radix?: number) => {
     return parseInt(this.safeValue, radix)
   }
-  float = (): number => {
+  float = () => {
     return parseFloat(this.safeValue)
   }
-  bool = (): boolean => {
+  bool = () => {
     // TODO: improve this behavior
     return Boolean(this.value)
   }
-  json = (): any => {
+  json = () => {
     return JSON.parse(this.safeValue)
   }
   /**
    * @param splitter By default, it splits a string by white space, new line and comma.
    * @returns 
    */
-  array = (splitter: string | RegExp = /\s|,|\r|\n|\r\n/): string[] => {
+  array = (splitter: string | RegExp = /\s|,|\r|\n|\r\n/) => {
     const vars = this.safeValue.split(splitter)
     return vars.filter(v => Boolean(v))
   }
-  port = (): number => {
+  port = () => {
     const p = parseInt(this.safeValue)
     if (0 <= p && p <= 65535) {
       return p
@@ -93,7 +117,7 @@ export class EnvVarValue {
 }
 
 const env = (key: string): EnvVar => {
-  return new EnvVar({ key })
+  return new EnvVarImpl({ key })
 }
 
 export default env
