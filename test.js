@@ -1,13 +1,16 @@
 import test from 'ava'
 import env from "./dist/index.js"
 
-const defaultStringValue = env("ENV_TEST_STRING")
-.byDefault("default")
-.get()
-console.log(defaultStringValue.asString())
+test("default string", t=>{
+  const v = env("ENV_TEST_STRING")
+  .default("default")
+  .get()
+  t.assert(v.string() === "default")
+})
 
-
-const defaultIntValue = env("ENV_TEST_INT")
-.byDefault("10")
-.get()
-console.log(defaultIntValue.asInt())
+test("default int", t=>{
+  const v = env("ENV_TEST_INT")
+  .default("10")
+  .get()
+  t.assert(v.int() === 10)
+})
