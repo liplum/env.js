@@ -10,8 +10,9 @@ export interface EnvVarEvalutor {
   bool: () => boolean
   json: () => any
   /**
+   * @deprecated This will be removed at `v1.0.0`.
    * Dangerous!
-   * @returns 
+   * @returns the evaluated value
    */
   eval: () => any
   /**

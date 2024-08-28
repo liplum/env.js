@@ -139,12 +139,3 @@ const domain = env("ENV_TEST")
 .from(() => "8080")
 console.log(domain.port() === 8080) // true
 ```
-
-dynamically evaluate the expression
-Note: it's dangerous. [Learn More](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/eval#never_use_direct_eval!)
-
-```js
-const domain = env("ENV_TEST")
-.from(() => "1+1")
-console.log(domain.eval() === 2) // true
-```

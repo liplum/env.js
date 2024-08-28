@@ -55,15 +55,6 @@ test("json string", t => {
   t.assert(v.json().name === "@liplum/env")
 })
 
-
-test("eval string", t => {
-  const v = env("ENV_TEST")
-    .from({
-      "ENV_TEST": "1+1"
-    })
-  t.assert(v.eval() === 2)
-})
-
 test("lazy default value", t => {
   const v = env("ENV_TEST")
     .default(() => "lazy evaluation")
