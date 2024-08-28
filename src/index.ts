@@ -1,19 +1,31 @@
 export type EnvStore = typeof process.env | Record<string, string | undefined>
+export type DefaultGetter = () => string
 export interface EnvVar {
   readonly key: string
-  default: (defaultValue: string) => EnvVar
+  /**
+   * Set the default value.
+   * @param defaultValue a string, or a function for lazy evaluation.
+   * @returns a new EnvVar instance
+   */
+  default: (defaultValue: string | DefaultGetter) => EnvVar
+  /**
+   * Set the env store.
+   * The default enc store is `process.env`.
+   * @param store a string, or a function for lazy evaluation.
+   * @returns a new EnvVar instance
+   */
   from: (store: EnvStore) => EnvVar
   end: () => EnvVarValue
 }
 class EnvVarImpl implements EnvVar {
   readonly key: string
-  readonly defaultValue?: string
+  readonly defaultValue?: string | DefaultGetter
   readonly store?: EnvStore
   constructor({
     key, defaultValue, store
   }: {
     key: string
-    defaultValue?: string
+    defaultValue?: string | DefaultGetter
     store?: EnvStore
   }) {
     this.key = key
@@ -24,7 +36,7 @@ class EnvVarImpl implements EnvVar {
   copyWith = ({
     defaultValue, store
   }: {
-    defaultValue?: string
+    defaultValue?: string | DefaultGetter
     store?: EnvStore
   }): EnvVar => {
     return new EnvVarImpl({
@@ -34,10 +46,17 @@ class EnvVarImpl implements EnvVar {
     })
   }
 
-  default = (defaultValue: string): EnvVar => {
+  default = (defaultValue: string | DefaultGetter): EnvVar => {
     return this.copyWith({
       defaultValue,
     })
+  }
+
+  getDefaultValue = (): string | undefined => {
+    if (typeof this.defaultValue === "function") {
+      return this.defaultValue()
+    }
+    return this.defaultValue
   }
 
   from = (store: EnvStore): EnvVar => {
@@ -70,7 +89,7 @@ class EnvVarValueImpl implements EnvVarValue {
   raw = (): string | undefined => {
     const parent = this.parent
     const store = parent.store ? parent.store : process.env
-    const value = store[parent.key] ?? parent.defaultValue
+    const value = store[parent.key] ?? parent.getDefaultValue()
     return value
   }
 

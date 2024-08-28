@@ -9,6 +9,10 @@
   "files": [
     "dist"
   ],
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc && ava"
+  },
   "directories": {
     "test": "test"
   },
@@ -17,10 +21,6 @@
     "url": "git+https://github.com/liplum/env.js.git"
   },
   "author": "Liplum <Li_plum@outlook.com>",
-  "scripts": {
-    "build": "tsc",
-    "test": "tsc && ava"
-  },
   "devDependencies": {
     "@types/node": "^22.4.1",
     "ava": "^6.1.3",

@@ -71,3 +71,5 @@ test("eval string", t=>{
   .end()
   t.assert(v.eval() === 2)
 })
+
+test("lazy default value")
