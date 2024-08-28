@@ -1,4 +1,4 @@
-export type EnvStore = typeof process.env | Record<string, string | undefined>
+export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string>
 export type DefaultGetter = () => string
 export interface EnvVar {
   readonly key: string
@@ -11,7 +11,7 @@ export interface EnvVar {
   /**
    * Set the env store.
    * The default enc store is `process.env`.
-   * @param store a string, or a function for lazy evaluation.
+   * @param store an object or a map
    * @returns a new EnvVar instance
    */
   from: (store: EnvStore) => EnvVar
@@ -59,6 +59,14 @@ class EnvVarImpl implements EnvVar {
     return this.defaultValue
   }
 
+  getValue = (): string | undefined => {
+    const store = this.store ? this.store : process.env
+    const value = store instanceof Map
+      ? store.get(this.key)
+      : store[this.key] ?? this.getDefaultValue()
+    return value
+  }
+
   from = (store: EnvStore): EnvVar => {
     return this.copyWith({
       store,
@@ -76,7 +84,15 @@ export interface EnvVarValue {
   float: () => number
   bool: () => boolean
   json: () => any
+  /**
+   * Dangerous!
+   * @returns 
+   */
   eval: () => any
+  /**
+   * @param splitter By default, it splits a string by white space, new line and comma.
+   * @returns 
+   */
   array: () => string[]
   port: () => number
 }
@@ -87,10 +103,7 @@ class EnvVarValueImpl implements EnvVarValue {
   }
 
   raw = (): string | undefined => {
-    const parent = this.parent
-    const store = parent.store ? parent.store : process.env
-    const value = store[parent.key] ?? parent.getDefaultValue()
-    return value
+    return this.parent.getValue()
   }
 
   get safeValue(): string {
@@ -116,21 +129,16 @@ class EnvVarValueImpl implements EnvVarValue {
   json = () => {
     return JSON.parse(this.safeValue)
   }
-  /**
-   * Dangerous!
-   * @returns 
-   */
+
   eval = () => {
     return eval(this.safeValue)
   }
-  /**
-   * @param splitter By default, it splits a string by white space, new line and comma.
-   * @returns 
-   */
+
   array = (splitter: string | RegExp = /\s|,|\r|\n|\r\n/) => {
     const vars = this.safeValue.split(splitter)
     return vars.filter(v => Boolean(v))
   }
+
   port = () => {
     const p = parseInt(this.safeValue)
     if (0 <= p && p <= 65535) {
