@@ -1,83 +1,4 @@
-export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string>
-export type DefaultGetter = () => string
-export interface EnvVar {
-  readonly key: string
-  /**
-   * Set the default value.
-   * @param defaultValue a string, or a function for lazy evaluation.
-   * @returns a new EnvVar instance
-   */
-  default: (defaultValue: string | DefaultGetter) => EnvVar
-  /**
-   * Set the env store.
-   * The default enc store is `process.env`.
-   * @param store an object or a map
-   * @returns a new EnvVar instance
-   */
-  from: (store: EnvStore) => EnvVar
-  end: () => EnvVarValue
-}
-class EnvVarImpl implements EnvVar {
-  readonly key: string
-  readonly defaultValue?: string | DefaultGetter
-  readonly store?: EnvStore
-  constructor({
-    key, defaultValue, store
-  }: {
-    key: string
-    defaultValue?: string | DefaultGetter
-    store?: EnvStore
-  }) {
-    this.key = key
-    this.defaultValue = defaultValue
-    this.store = store
-  }
-
-  copyWith = ({
-    defaultValue, store
-  }: {
-    defaultValue?: string | DefaultGetter
-    store?: EnvStore
-  }): EnvVar => {
-    return new EnvVarImpl({
-      key: this.key,
-      defaultValue: defaultValue ?? this.defaultValue,
-      store: store ?? this.store,
-    })
-  }
-
-  default = (defaultValue: string | DefaultGetter): EnvVar => {
-    return this.copyWith({
-      defaultValue,
-    })
-  }
-
-  getDefaultValue = (): string | undefined => {
-    if (typeof this.defaultValue === "function") {
-      return this.defaultValue()
-    }
-    return this.defaultValue
-  }
-
-  getValue = (): string | undefined => {
-    const store = this.store ? this.store : process.env
-    const value = store instanceof Map
-      ? store.get(this.key)
-      : store[this.key] ?? this.getDefaultValue()
-    return value
-  }
-
-  from = (store: EnvStore): EnvVar => {
-    return this.copyWith({
-      store,
-    })
-  }
-
-  end = (): EnvVarValue => {
-    return new EnvVarValueImpl(this)
-  }
-}
-export interface EnvVarValue {
+export interface EnvVarEvalutor {
   raw: () => string | undefined
   string: () => string
   int: (radix?: number) => number
@@ -96,36 +17,122 @@ export interface EnvVarValue {
   array: () => string[]
   port: () => number
 }
-class EnvVarValueImpl implements EnvVarValue {
-  readonly parent: EnvVarImpl
-  constructor(parent: EnvVarImpl) {
-    this.parent = parent
+
+export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string>
+export type DefaultGetter = () => string
+
+export interface EnvVar extends EnvVarEvalutor {
+  readonly key: string
+  /**
+   * Set the default value.
+   * @param defaultValue a string, or a function for lazy evaluation.
+   * @returns a new EnvVar instance
+   */
+  default: (defaultValue: string | DefaultGetter) => EnvVar
+  /**
+   * Set the env store.
+   * The default enc store is `process.env`.
+   * @param store an object or a map
+   * @returns a new EnvVar instance
+   */
+  from: (store: EnvStore) => EnvVar
+  /**
+   * @deprecated This will be removed at `v1.0.0`.
+   * @returns Return a new EnvVar instance
+   */
+  end: () => EnvVar
+}
+
+class EnvVarImpl implements EnvVar {
+  readonly key: string
+  readonly defaultValue?: string | DefaultGetter
+  readonly store?: EnvStore
+  constructor({
+    key, defaultValue, store
+  }: {
+    key: string
+    defaultValue?: string | DefaultGetter
+    store?: EnvStore
+  }) {
+    this.key = key
+    this.defaultValue = defaultValue
+    this.store = store
+  }
+
+  private copyWith = ({
+    defaultValue, store
+  }: {
+    defaultValue?: string | DefaultGetter
+    store?: EnvStore
+  }): EnvVar => {
+    return new EnvVarImpl({
+      key: this.key,
+      defaultValue: defaultValue ?? this.defaultValue,
+      store: store ?? this.store,
+    })
+  }
+
+  default = (defaultValue: string | DefaultGetter): EnvVar => {
+    return this.copyWith({
+      defaultValue,
+    })
+  }
+
+
+  from = (store: EnvStore): EnvVar => {
+    return this.copyWith({
+      store,
+    })
+  }
+
+  end = (): EnvVar => {
+    return new EnvVarImpl(this)
+  }
+
+  private getDefaultValue = (): string | undefined => {
+    if (typeof this.defaultValue === "function") {
+      return this.defaultValue()
+    }
+    return this.defaultValue
+  }
+
+  private getValueFromStore = (): string | undefined => {
+    const store = this.store ? this.store : process.env
+    if (store instanceof Map) {
+      return store.get(this.key)
+    }
+    return store[this.key]
   }
 
   raw = (): string | undefined => {
-    return this.parent.getValue()
+    return this.getValueFromStore() ?? this.getDefaultValue()
   }
 
   get safeValue(): string {
     const value = this.raw()
     if (value === undefined) {
-      throw new Error(`Missing the environment variable "${this.parent.key}".`)
+      throw new Error(`Missing the environment variable "${this.key}".`)
     }
     return value
   }
+
   string = () => {
     return this.safeValue
   }
+
   int = (radix?: number) => {
     return parseInt(this.safeValue, radix)
   }
+
   float = () => {
     return parseFloat(this.safeValue)
   }
+
   bool = () => {
     // TODO: improve this behavior
     return Boolean(this.raw)
   }
+
   json = () => {
     return JSON.parse(this.safeValue)
   }
