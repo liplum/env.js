@@ -1,4 +1,8 @@
 export interface EnvVarEvalutor {
+  /**
+   * Get the raw value
+   * @returns the raw value of the environment variable, or undefined if it was missing.
+   */
   raw: () => string | undefined
   string: () => string
   int: (radix?: number) => number
@@ -14,7 +18,7 @@ export interface EnvVarEvalutor {
    * @param splitter By default, it splits a string by white space, new line and comma.
    * @returns 
    */
-  array: () => string[]
+  array: (splitter?: string | RegExp) => string[]
   port: () => number
 }
 export type EnvResolver = (key: string) => string | undefined

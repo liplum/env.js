@@ -70,8 +70,21 @@ test("lazy default value", t => {
   t.assert(v.string() === "lazy evaluation")
 })
 
+test("custom env store by map", t => {
+  const store = new Map()
+  store.set("ENV_TEST", "map value")
+  const v = env("ENV_TEST")
+    .from(store)
+  t.assert(v.string() === "map value")
+})
+
 test("custom env store by func", t => {
   const v = env("ENV_TEST")
     .from((k) => `value of ${k}`)
   t.assert(v.string() === "value of ENV_TEST")
+})
+
+test("raw and undefined", t=>{
+  const v = env("LIPLUM_ENV_TEST")
+  t.assert(v.raw() === undefined)
 })
