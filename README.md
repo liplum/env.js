@@ -5,7 +5,9 @@
 ```sh
 yarn add @liplum/env
 # or
-npm i --save @liplum/env
+npm i @liplum/env
+# or
+pnpm i @liplum/env
 ```
 
 ## Usage
@@ -14,11 +16,8 @@ npm i --save @liplum/env
 
 ```js
 import env from "@liplum/env"
-
 // assume `process.env` has MY_DOMAIN="example.com"
 const domain = env("MY_DOMAIN")
-.end()
-
 console.log(domain.string()) // example.com
 ```
 
@@ -27,8 +26,6 @@ console.log(domain.string()) // example.com
 ```js
 const domain = env("MY_DOMAIN")
 .default("example.com")
-.end()
-
 console.log(domain.string()) // example.com
 ```
 
@@ -39,8 +36,6 @@ const domain = env("MY_DOMAIN")
 .from({
   "MY_DOMAIN": "example.com"
 })
-.end()
-
 console.log(domain.string()) // example.com
 ```
 
@@ -53,8 +48,6 @@ console.log(domain.string()) // example.com
   .from({
     "ENV_TEST": "hello, world!"
   })
-  .end()
-
   console.log(domain.string()) // hello, world!
   ```
 
@@ -65,8 +58,6 @@ console.log(domain.string()) // example.com
   .from({
     "ENV_TEST": "1024"
   })
-  .end()
-
   console.log(domain.int() === 1024) // true
   ```
 
@@ -77,8 +68,6 @@ console.log(domain.string()) // example.com
   .from({
     "ENV_TEST": "3.14"
   })
-  .end()
-
   console.log(domain.float() === 3.14) // true
   ```
 
@@ -89,8 +78,6 @@ console.log(domain.string()) // example.com
   .from({
     "ENV_TEST": "token1, token2, token3"
   })
-  .end()
-
   console.log(domain.array().length===3) // true
   ```
 
@@ -103,7 +90,5 @@ console.log(domain.string()) // example.com
       "name" : "@liplum/env"
     })
   })
-  .end()
-
   console.log(domain.json().name==="@liplum/env") // true
   ```
