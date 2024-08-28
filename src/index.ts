@@ -17,8 +17,8 @@ export interface EnvVarEvalutor {
   array: () => string[]
   port: () => number
 }
-
-export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string>
+export type EnvResolver = (key: string) => string | undefined
+export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string> | EnvResolver
 export type DefaultGetter = () => string
 
 export interface EnvVar extends EnvVarEvalutor {
@@ -100,6 +100,9 @@ class EnvVarImpl implements EnvVar {
     const store = this.store ? this.store : process.env
     if (store instanceof Map) {
       return store.get(this.key)
+    }
+    if (typeof store === "function") {
+      return store(this.key)
     }
     return store[this.key]
   }

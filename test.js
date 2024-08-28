@@ -69,3 +69,9 @@ test("lazy default value", t => {
     .default(() => "lazy evaluation")
   t.assert(v.string() === "lazy evaluation")
 })
+
+test("custom env store by func", t => {
+  const v = env("ENV_TEST")
+    .from((k) => `value of ${k}`)
+  t.assert(v.string() === "value of ENV_TEST")
+})
