@@ -2,31 +2,41 @@ import test from 'ava'
 import env from "./dist/index.js"
 
 test("default string", t => {
-  const v = env("ENV_TEST_STRING")
+  const v = env("ENV_TEST")
     .default("default")
   t.assert(v.string() === "default")
 })
 
+test("default bool", t => {
+  const v = env("ENV_TEST")
+    .default("true")
+  t.assert(v.bool() === true)
+  
+  const v2 = env("ENV_TEST")
+    .default("false")
+  t.assert(v2.bool() === false)
+})
+
 test("default int", t => {
-  const v = env("ENV_TEST_INT")
+  const v = env("ENV_TEST")
     .default("10")
   t.assert(v.int() === 10)
 })
 
 test("default array by comma", t => {
-  const v = env("ENV_TEST_ARRAY")
+  const v = env("ENV_TEST")
     .default("t1,t2,t3")
   t.assert(v.array().toString() === ["t1", "t2", "t3"].toString())
 })
 
 test("default array by white space", t => {
-  const v = env("ENV_TEST_ARRAY")
+  const v = env("ENV_TEST")
     .default("t1  t2 t3")
   t.assert(v.array().toString() === ["t1", "t2", "t3"].toString())
 })
 
 test("default array by new line", t => {
-  const v = env("ENV_TEST_ARRAY")
+  const v = env("ENV_TEST")
     .default(`
     t1
     t2
@@ -75,7 +85,7 @@ test("custom env store by func", t => {
   t.assert(v.string() === "value of ENV_TEST")
 })
 
-test("raw and undefined", t=>{
+test("raw and undefined", t => {
   const v = env("LIPLUM_ENV_TEST")
   t.assert(v.raw() === undefined)
 })

@@ -34,5 +34,8 @@
     "env",
     "env-var",
     "process.env"
-  ]
+  ],
+  "dependencies": {
+    "@liplum/str2bool": "^0.0.1"
+  }
 }

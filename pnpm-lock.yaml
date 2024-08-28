@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@liplum/str2bool':
+        specifier: ^0.0.1
+        version: 0.0.1
     devDependencies:
       '@types/node':
         specifier: ^22.4.1
@@ -19,6 +23,9 @@ importers:
         version: 5.5.4
 
 packages:
+
+  '@liplum/str2bool@0.0.1':
+    resolution: {integrity: sha512-rdwBt8cv7igi3xlG6AkXp0ut0XTWUkLzTVVcWq51JdcpziHbdZ0T2XNJ2nwgAdsodqVKKRUactvdnmBZ0z1aNA==}
 
   '@mapbox/node-pre-gyp@1.0.11':
     resolution: {integrity: sha512-Yhlar6v9WQgUp/He7BdgzOz8lqMQ8sU+jkCq7Wx8Myc5YFJLbEe7lgui/V7G1qB1DJykHSGwreceSaD60Y0PUQ==}
@@ -701,6 +708,8 @@ packages:
     engines: {node: '>=12'}
 
 snapshots:
+
+  '@liplum/str2bool@0.0.1': {}
 
   '@mapbox/node-pre-gyp@1.0.11':
     dependencies:

@@ -1,3 +1,22 @@
+import str2bool from "@liplum/str2bool"
+export interface EnvVarBoolOptions {
+  /**
+   * If enabled, "yes" and "y" will be considered as `true`,
+   * while "no" and "n" will be considered as `false`.
+   *
+   * false by default.
+   */
+  yesOrNo?: boolean;
+  /**
+   * The strings will be considered as `true`
+   */
+  truthy?: string[];
+  /**
+   * The strings will be considered as `false`
+   */
+  falsy?: string[];
+}
+
 export interface EnvVarEvalutor {
   /**
    * Get the raw value
@@ -7,7 +26,7 @@ export interface EnvVarEvalutor {
   string: () => string
   int: (radix?: number) => number
   float: () => number
-  bool: () => boolean
+  bool: (options?: EnvVarBoolOptions) => boolean
   json: () => any
   /**
    * @deprecated This will be removed at `v1.0.0`.
@@ -136,9 +155,11 @@ class EnvVarImpl implements EnvVar {
     return parseFloat(this.safeValue)
   }
 
-  bool = () => {
-    // TODO: improve this behavior
-    return Boolean(this.raw)
+  bool = (options?: EnvVarBoolOptions) => {
+    return str2bool(this.safeValue, {
+      strict: false,
+      ...options
+    })
   }
 
   json = () => {

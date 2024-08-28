@@ -96,6 +96,16 @@ const domain = env("ENV_TEST")
 console.log(domain.string()) // hello, world!
 ```
 
+boolean
+
+Under the hood, the package [@liplum/str2bool](https://www.npmjs.com/package/@liplum/str2bool) is used to convert the env string to boolean.
+
+```js
+const domain = env("ENV_TEST")
+.from(() => "true")
+console.log(domain.bool() === true) // hello, world!
+```
+
 integer
 
 ```js
