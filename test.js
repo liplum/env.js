@@ -9,35 +9,35 @@ test("default string", t => {
 
 test("default bool", t => {
   const v = env("ENV_TEST")
-    .default("true")
+    .from(() => "true")
   t.assert(v.bool() === true)
   
   const v2 = env("ENV_TEST")
-    .default("false")
+    .from(() => "false")
   t.assert(v2.bool() === false)
 })
 
 test("default int", t => {
   const v = env("ENV_TEST")
-    .default("10")
+    .from(() => "10")
   t.assert(v.int() === 10)
 })
 
 test("default array by comma", t => {
   const v = env("ENV_TEST")
-    .default("t1,t2,t3")
+    .from(() => "t1,t2,t3")
   t.assert(v.array().toString() === ["t1", "t2", "t3"].toString())
 })
 
 test("default array by white space", t => {
   const v = env("ENV_TEST")
-    .default("t1  t2 t3")
+    .from(() => "t1  t2 t3")
   t.assert(v.array().toString() === ["t1", "t2", "t3"].toString())
 })
 
 test("default array by new line", t => {
   const v = env("ENV_TEST")
-    .default(`
+    .from(() => `
     t1
     t2
     t3
