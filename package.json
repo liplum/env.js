@@ -42,5 +42,10 @@
   "dependencies": {
     "@liplum/str2bool": "^0.0.1"
   },
-  "packageManager": "pnpm@9.9.0"
+  "packageManager": "pnpm@9.9.0",
+  "ava": {
+    "files": [
+      "test/*.js"
+    ]
+  }
 }

@@ -1,21 +1,25 @@
 import str2bool from "@liplum/str2bool"
 
-export interface Env {
-  readonly key: string
-  get: () => string | undefined
-  string: () => StrEnv
-  bool: () => BoolEnv
-  int: () => IntEnv
-  float: () => FloatEnv
-  port: () => PortEnv
-  array: () => ArrayEnv
-  url: () => UrlEnv
-}
+export type DefaultValue<TDefault> = TDefault | (() => TDefault)
 
 export type EnvResolver = (key: string) => string | undefined
 export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string> | EnvResolver
 
-class EnvImpl {
+export interface Env {
+  readonly key: string
+  from: (store: EnvStore) => Env
+  get: () => string
+  getOrNull: () => string | undefined
+  string: (defaultValue?: DefaultValue<string>) => StringEnv
+  bool: (defaultValue?: DefaultValue<boolean>) => BoolEnv
+  int: (defaultValue?: DefaultValue<number>) => IntEnv
+  float: (defaultValue?: DefaultValue<number>) => FloatEnv
+  port: (defaultValue?: DefaultValue<number>) => PortEnv
+  array: (defaultValue?: DefaultValue<string[]>) => ArrayEnv
+  url: (defaultValue?: DefaultValue<URL | string>) => UrlEnv
+}
+
+class EnvImpl implements Env {
   readonly key: string
   readonly store?: EnvStore
   constructor({ key, store }: { key: string, store?: EnvStore }) {
@@ -40,59 +44,75 @@ class EnvImpl {
     }
     return store[this.key]
   }
-
   get = () => {
+    const raw = this.getOrNull()
+    if (raw === undefined) {
+      throw missingEnvError(this.key)
+    }
+    return raw
+  }
+  getOrNull = () => {
     return this.getValueFromStore()
   }
 
-  string = () => {
-    return new StrEnv(this)
+  string = (defaultValue?: DefaultValue<string>) => {
+    return new StringEnv(this, defaultValue)
   }
 
-  bool = () => {
-    return new BoolEnv(this)
+  bool = (defaultValue?: DefaultValue<boolean>) => {
+    return new BoolEnv(this, defaultValue)
   }
 
-  int = () => {
-    return new IntEnv(this)
+  int = (defaultValue?: DefaultValue<number>) => {
+    return new IntEnv(this, defaultValue)
   }
 
-  float = () => {
-    return new FloatEnv(this)
+  float = (defaultValue?: DefaultValue<number>) => {
+    return new FloatEnv(this, defaultValue)
   }
 
-  port = () => {
-    return new PortEnv(this)
+  port = (defaultValue?: DefaultValue<number>) => {
+    return new PortEnv(this, defaultValue)
   }
 
-  array = () => {
-    return new ArrayEnv(this)
+  array = (defaultValue?: DefaultValue<string[]>) => {
+    return new ArrayEnv(this, defaultValue)
   }
 
-  url = () => {
-    return new UrlEnv(this)
+  url = (defaultValue?: DefaultValue<URL | string>) => {
+    return new UrlEnv(this, defaultValue)
   }
 }
 
 const missingEnvError = (key: string): Error => {
   return new Error(`Missing the environment variable "${key}".`)
 }
+const isFunction = (arg: any): arg is Function => typeof arg === 'function'
 
-class EnvMixin {
+class EnvMixin<TDefault> {
   readonly env: Env
-  constructor(env: Env) {
+  readonly defaultValue?: DefaultValue<TDefault>
+  constructor(env: Env, defaultValue?: DefaultValue<TDefault>) {
     this.env = env
+    this.defaultValue = defaultValue
+  }
+  getDefaultValue = (): TDefault | undefined => {
+    const defaultValue = this.defaultValue
+    if (isFunction(defaultValue)) {
+      return defaultValue()
+    }
+    return defaultValue
   }
   missingEnvError = (): Error => {
     return missingEnvError(this.env.key)
   }
 }
 
-class StrEnv extends EnvMixin {
+class StringEnv extends EnvMixin<string> {
   getOrNull = (): string | undefined => {
-    const raw = this.env.get()
+    const raw = this.env.getOrNull()
     if (raw === undefined) {
-      return
+      return this.getDefaultValue()
     }
     return raw
   }
@@ -122,11 +142,11 @@ export interface BoolEnvValueOptions {
   falsy?: string[];
 }
 
-class BoolEnv extends EnvMixin {
+class BoolEnv extends EnvMixin<boolean> {
   getOrNull = (options?: BoolEnvValueOptions): boolean | undefined => {
-    const raw = this.env.get()
+    const raw = this.env.getOrNull()
     if (raw === undefined) {
-      return
+      return this.getDefaultValue()
     }
     return str2bool(raw, {
       strict: false,
@@ -142,11 +162,11 @@ class BoolEnv extends EnvMixin {
   }
 }
 
-class IntEnv extends EnvMixin {
+class IntEnv extends EnvMixin<number> {
   getOrNull = (radix?: number): number | undefined => {
-    const raw = this.env.get()
+    const raw = this.env.getOrNull()
     if (raw === undefined) {
-      return
+      return this.getDefaultValue()
     }
     return parseInt(raw, radix)
   }
@@ -159,11 +179,11 @@ class IntEnv extends EnvMixin {
   }
 }
 
-class FloatEnv extends EnvMixin {
+class FloatEnv extends EnvMixin<number> {
   getOrNull = (): number | undefined => {
-    const raw = this.env.get()
+    const raw = this.env.getOrNull()
     if (raw === undefined) {
-      return
+      return this.getDefaultValue()
     }
     return parseFloat(raw)
   }
@@ -180,11 +200,11 @@ const checkPort = (p: number) => {
   return 0 <= p && p <= 65535
 }
 
-class PortEnv extends EnvMixin {
+class PortEnv extends EnvMixin<number> {
   getOrNull = (): number | undefined => {
-    const raw = this.env.get()
+    const raw = this.env.getOrNull()
     if (raw === undefined) {
-      return
+      return this.getDefaultValue()
     }
     const result = parseInt(raw)
     if (!checkPort(result)) {
@@ -201,11 +221,11 @@ class PortEnv extends EnvMixin {
   }
 }
 const defaultArraySpliter = /\s|,|\r|\n|\r\n/
-class ArrayEnv extends EnvMixin {
+class ArrayEnv extends EnvMixin<string[]> {
   getOrNull = (splitter: string | RegExp = defaultArraySpliter): string[] | undefined => {
-    const raw = this.env.get()
+    const raw = this.env.getOrNull()
     if (raw === undefined) {
-      return
+      return this.getDefaultValue()
     }
     const vars = raw.split(splitter)
     return vars.filter(v => Boolean(v))
@@ -219,9 +239,9 @@ class ArrayEnv extends EnvMixin {
   }
 }
 
-class UrlEnv extends EnvMixin {
+class UrlEnv extends EnvMixin<URL | string> {
   getOrNull = (): URL | undefined => {
-    const raw = this.env.get()
+    const raw = this.env.getOrNull() ?? this.getDefaultValue()
     if (raw === undefined) {
       return
     }

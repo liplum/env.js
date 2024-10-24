@@ -1,5 +1,5 @@
 import test from 'ava'
-import env from "./dist/index.js"
+import env from "../dist/index.js"
 
 test("default string", t => {
   const v = env("ENV_TEST")
