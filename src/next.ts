@@ -5,21 +5,7 @@ export type DefaultValue<TDefault> = TDefault | (() => TDefault)
 export type EnvResolver = (key: string) => string | undefined
 export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string> | EnvResolver
 
-export interface Env {
-  readonly key: string
-  from: (store: EnvStore) => Env
-  get: () => string
-  getOrNull: () => string | undefined
-  string: (defaultValue?: DefaultValue<string>) => StringEnv
-  bool: (defaultValue?: DefaultValue<boolean>) => BoolEnv
-  int: (defaultValue?: DefaultValue<number>) => IntEnv
-  float: (defaultValue?: DefaultValue<number>) => FloatEnv
-  port: (defaultValue?: DefaultValue<number>) => PortEnv
-  array: (defaultValue?: DefaultValue<string[]>) => ArrayEnv
-  url: (defaultValue?: DefaultValue<URL | string>) => UrlEnv
-}
-
-class EnvImpl implements Env {
+export class Env {
   readonly key: string
   readonly store?: EnvStore
   constructor({ key, store }: { key: string, store?: EnvStore }) {
@@ -27,8 +13,8 @@ class EnvImpl implements Env {
     this.store = store
   }
 
-  from = (store: EnvStore): EnvImpl => {
-    return new EnvImpl({
+  from = (store: EnvStore): Env => {
+    return new Env({
       key: this.key,
       store: store,
     })
@@ -90,25 +76,25 @@ const missingEnvError = (key: string): Error => {
 const isFunction = (arg: any): arg is Function => typeof arg === 'function'
 
 class EnvMixin<TDefault> {
-  readonly env: Env
-  readonly defaultValue?: DefaultValue<TDefault>
+  protected readonly env: Env
+  protected readonly defaultValue?: DefaultValue<TDefault>
   constructor(env: Env, defaultValue?: DefaultValue<TDefault>) {
     this.env = env
     this.defaultValue = defaultValue
   }
-  getDefaultValue = (): TDefault | undefined => {
+  protected getDefaultValue = (): TDefault | undefined => {
     const defaultValue = this.defaultValue
     if (isFunction(defaultValue)) {
       return defaultValue()
     }
     return defaultValue
   }
-  missingEnvError = (): Error => {
+  protected missingEnvError = (): Error => {
     return missingEnvError(this.env.key)
   }
 }
 
-class StringEnv extends EnvMixin<string> {
+export class StringEnv extends EnvMixin<string> {
   getOrNull = (): string | undefined => {
     const raw = this.env.getOrNull()
     if (raw === undefined) {
@@ -262,7 +248,7 @@ class UrlEnv extends EnvMixin<URL | string> {
 }
 
 const env = (key: string): Env => {
-  return new EnvImpl({ key })
+  return new Env({ key })
 }
 
 export default env
