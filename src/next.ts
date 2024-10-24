@@ -41,31 +41,38 @@ export class Env {
     return this.getValueFromStore()
   }
 
-  string = (defaultValue?: DefaultValue<string>) => {
+  string = (options?: { default?: DefaultValue<string> }) => {
+    const { default: defaultValue } = options ?? {}
     return new StringEnv(this, defaultValue)
   }
 
-  bool = (defaultValue?: DefaultValue<boolean>) => {
+  bool = (options?: { default?: DefaultValue<boolean> }) => {
+    const { default: defaultValue } = options ?? {}
     return new BoolEnv(this, defaultValue)
   }
 
-  int = (defaultValue?: DefaultValue<number>) => {
+  int = (options?: { default?: DefaultValue<number> }) => {
+    const { default: defaultValue } = options ?? {}
     return new IntEnv(this, defaultValue)
   }
 
-  float = (defaultValue?: DefaultValue<number>) => {
+  float = (options?: { default?: DefaultValue<number> }) => {
+    const { default: defaultValue } = options ?? {}
     return new FloatEnv(this, defaultValue)
   }
 
-  port = (defaultValue?: DefaultValue<number>) => {
+  port = (options?: { default?: DefaultValue<number> }) => {
+    const { default: defaultValue } = options ?? {}
     return new PortEnv(this, defaultValue)
   }
 
-  array = (defaultValue?: DefaultValue<string[]>) => {
+  array = (options?: { default?: DefaultValue<string[]> }) => {
+    const { default: defaultValue } = options ?? {}
     return new ArrayEnv(this, defaultValue)
   }
 
-  url = (defaultValue?: DefaultValue<URL | string>) => {
+  url = (options?: { default?: DefaultValue<URL | string> }) => {
+    const { default: defaultValue } = options ?? {}
     return new UrlEnv(this, defaultValue)
   }
 }

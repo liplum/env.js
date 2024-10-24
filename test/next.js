@@ -2,7 +2,7 @@ import test from 'ava'
 import env from "../dist/next.js"
 
 test("default string", t => {
-  const v = env("ENV_TEST").string("default")
+  const v = env("ENV_TEST").string({ default: "default" })
   t.assert(v.get() === "default")
 })
 
@@ -54,7 +54,7 @@ test("custom env store", t => {
 
 test("lazy default value", t => {
   const v = env("ENV_TEST")
-    .string(() => "lazy evaluation")
+    .string({ default: () => "lazy evaluation" })
   t.assert(v.get() === "lazy evaluation")
 })
 
