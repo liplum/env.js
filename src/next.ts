@@ -252,6 +252,20 @@ class UrlEnv extends EnvMixin<URL | string> {
     }
     return result
   }
+  getStringOrNull = (): string | undefined => {
+    const result = this.getOrNull()
+    if (result === undefined) {
+      return
+    }
+    return result.toString()
+  }
+  getString = (): string => {
+    const result = this.getStringOrNull()
+    if (result === undefined) {
+      throw this.missingEnvError()
+    }
+    return result
+  }
 }
 
 const env = (key: string): Env => {

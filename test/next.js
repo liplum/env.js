@@ -22,6 +22,18 @@ test("default int", t => {
   t.assert(v.get() === 10)
 })
 
+test("default port", t => {
+  const v = env("ENV_TEST")
+    .from(() => "8080").port()
+  t.assert(v.get() === 8080)
+})
+
+test("default url", t => {
+  const v = env("ENV_TEST")
+    .from(() => "https://github.com").url()
+  t.assert(v.getString() === "https://github.com/")
+})
+
 test("default array by comma", t => {
   const v = env("ENV_TEST")
     .from(() => "t1,t2,t3").array()
