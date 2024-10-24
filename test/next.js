@@ -52,18 +52,6 @@ test("custom env store", t => {
   t.assert(v.get() === "test")
 })
 
-// test("json string", t => {
-//   const v = env("ENV_TEST")
-//     .from({
-//       "ENV_TEST": `
-//   {
-//     "name": "@liplum/env"  
-//   }
-//     `
-//     })
-//   t.assert(v.json().name === "@liplum/env")
-// })
-
 test("lazy default value", t => {
   const v = env("ENV_TEST")
     .string(() => "lazy evaluation")
