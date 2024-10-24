@@ -9,6 +9,10 @@
   "files": [
     "dist"
   ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./next": "./dist/next.js"
+  },
   "scripts": {
     "build": "tsc",
     "test": "tsc && ava"
