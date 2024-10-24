@@ -150,6 +150,23 @@ const domain = env("ENV_TEST")
 console.log(domain.port() === 8080) // true
 ```
 
+## Intergation with dotenv
+
+You can import the `dotenv/config` to load the .env file under the current working directory.
+
+```js
+import "dotenv/config"
+```
+
+Or you can config the dotenv to load .env file from other files.
+
+```js
+import dotenv from "dotenv"
+dotenv.config(...options)
+```
+
+To lean more about `dotenv`, please read [its document](https://www.npmjs.com/package/dotenv).
+
 ## *Next* version
 
 The next version was introduced and will replace the current version in the v1.0.0 release.
