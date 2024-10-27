@@ -11,7 +11,7 @@ test("default bool", t => {
   const v = env("ENV_TEST")
     .from(() => "true")
   t.assert(v.bool() === true)
-  
+
   const v2 = env("ENV_TEST")
     .from(() => "false")
   t.assert(v2.bool() === false)
@@ -88,4 +88,15 @@ test("custom env store by func", t => {
 test("raw and undefined", t => {
   const v = env("LIPLUM_ENV_TEST")
   t.assert(v.raw() === undefined)
+})
+
+test("default only once", t => {
+  let count = 0
+  const createDefault = () => `${count++}`
+  const v = env("ENV_TEST")
+    .default(createDefault)
+  const r1 = v.string()
+  const r2 = v.string()
+  t.assert(r1 === r2)
+  t.assert(count === 1)
 })

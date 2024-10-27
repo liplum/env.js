@@ -1,4 +1,6 @@
 import str2bool from "@liplum/str2bool"
+import { createLateinitGetter } from "./shared.js";
+
 export interface EnvVarBoolOptions {
   /**
    * If enabled, "yes" and "y" will be considered as `true`,
@@ -44,18 +46,15 @@ export interface EnvVarEvalutor {
 
 export type EnvResolver = (key: string) => string | undefined
 export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string> | EnvResolver
-export type DefaultValue<TDefault> = TDefault | (() => TDefault)
-
-const isFunction = (arg: any): arg is Function => typeof arg === 'function'
 
 export interface EnvVar<TDefault = string> extends EnvVarEvalutor {
   readonly key: string
   /**
    * Set the default value.
-   * @param defaultValue a string, or a function for lazy evaluation.
+   * @param defaultValue a string, or a function for lazy evaluation which it will be called only once.
    * @returns a new EnvVar instance
    */
-  default: <TNewDefault>(defaultValue: DefaultValue<TNewDefault>) => EnvVar<TNewDefault>
+  default: <TNewDefault>(defaultValue: TNewDefault | (() => TNewDefault)) => EnvVar<TNewDefault>
   /**
    * Set the env store.
    * The default enc store is `process.env`.
@@ -80,13 +79,13 @@ const unexpectedDefaultValue = <T>(given: NonUndefined<T>, expected: string): Er
 
 class EnvVarImpl<TDefault = string> implements EnvVar<TDefault> {
   readonly key: string
-  readonly defaultValue?: DefaultValue<TDefault>
+  readonly defaultValue?: () => TDefault
   readonly store?: EnvStore
   constructor({
     key, defaultValue, store
   }: {
     key: string
-    defaultValue?: DefaultValue<TDefault>
+    defaultValue?: () => TDefault
     store?: EnvStore
   }) {
     this.key = key
@@ -94,10 +93,10 @@ class EnvVarImpl<TDefault = string> implements EnvVar<TDefault> {
     this.store = store
   }
 
-  default = <TNewDefault>(defaultValue: DefaultValue<TNewDefault>): EnvVar<TNewDefault> => {
+  default = <TNewDefault>(defaultValue: TNewDefault | (() => TNewDefault)): EnvVar<TNewDefault> => {
     return new EnvVarImpl<TNewDefault>({
       key: this.key,
-      defaultValue: defaultValue,
+      defaultValue: createLateinitGetter(defaultValue),
       store: this.store,
     })
   }
@@ -115,11 +114,7 @@ class EnvVarImpl<TDefault = string> implements EnvVar<TDefault> {
   }
 
   private getDefaultValue = (): TDefault | undefined => {
-    const defaultValue = this.defaultValue
-    if (isFunction(defaultValue)) {
-      return defaultValue()
-    }
-    return defaultValue
+    return this.defaultValue?.()
   }
 
   private getValueFromStore = (): string | undefined => {

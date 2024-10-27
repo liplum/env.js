@@ -88,3 +88,14 @@ test("raw and undefined", t => {
   const v = env("LIPLUM_ENV_TEST")
   t.assert(v.getOrNull() === undefined)
 })
+
+test("default only once", t => {
+  let count = 0
+  const createDefault = () => `${count++}`
+  const v = env("ENV_TEST")
+    .string({ default: createDefault })
+  const r1 = v.get()
+  const r2 = v.get()
+  t.assert(r1 === r2)
+  t.assert(count === 1)
+})

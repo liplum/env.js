@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@liplum/lateinit':
+        specifier: ^0.0.1
+        version: 0.0.1
       '@liplum/str2bool':
         specifier: ^0.0.1
         version: 0.0.1
@@ -23,6 +26,9 @@ importers:
         version: 5.5.4
 
 packages:
+
+  '@liplum/lateinit@0.0.1':
+    resolution: {integrity: sha512-M5RaK3nWl9CIueA2hWdiOt0jjPI6bilh42/WByeZ0WmKu5mZRVOsSMwLmEz97FVFK3GzIJS1CaNu2i024lJdgQ==}
 
   '@liplum/str2bool@0.0.1':
     resolution: {integrity: sha512-rdwBt8cv7igi3xlG6AkXp0ut0XTWUkLzTVVcWq51JdcpziHbdZ0T2XNJ2nwgAdsodqVKKRUactvdnmBZ0z1aNA==}
@@ -708,6 +714,8 @@ packages:
     engines: {node: '>=12'}
 
 snapshots:
+
+  '@liplum/lateinit@0.0.1': {}
 
   '@liplum/str2bool@0.0.1': {}
 

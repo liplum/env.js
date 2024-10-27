@@ -48,7 +48,7 @@ const domain = env("MY_DOMAIN")
 console.log(domain.string()) // example.com
 ```
 
-Lazy evaluation of default value.
+Lazy evaluation of default value, ang it will be called only once.
 
 ```js
 const domain = env("MY_DOMAIN")
@@ -88,67 +88,67 @@ console.log(domain.string()) // example.com
 
 ### Value Type
 
-string
+- string
 
-```js
-const domain = env("ENV_TEST")
-.from(() => "hello, world!")
-console.log(domain.string()) // hello, world!
-```
+  ```js
+  const domain = env("ENV_TEST")
+  .from(() => "hello, world!")
+  console.log(domain.string()) // hello, world!
+  ```
 
-boolean
+- boolean
 
-Under the hood, the package [@liplum/str2bool](https://www.npmjs.com/package/@liplum/str2bool) is used to convert the env string to boolean.
+  Under the hood, the package [@liplum/str2bool](https://www.npmjs.com/package/@liplum/str2bool) is used to convert the env string to boolean.
 
-```js
-const domain = env("ENV_TEST")
-.from(() => "true")
-console.log(domain.bool() === true) // hello, world!
-```
+  ```js
+  const domain = env("ENV_TEST")
+  .from(() => "true")
+  console.log(domain.bool() === true) // hello, world!
+  ```
 
-integer
+- integer
 
-```js
-const domain = env("ENV_TEST")
-.from(() => "1024")
-console.log(domain.int() === 1024) // true
-// specify the radix
-console.log(domain.int(16) === 4132) // true
-```
+  ```js
+  const domain = env("ENV_TEST")
+  .from(() => "1024")
+  console.log(domain.int() === 1024) // true
+  // specify the radix
+  console.log(domain.int(16) === 4132) // true
+  ```
 
-float
+- float
 
-```js
-const domain = env("ENV_TEST")
-.from(() => "3.14")
-console.log(domain.float() === 3.14) // true
-```
+  ```js
+  const domain = env("ENV_TEST")
+  .from(() => "3.14")
+  console.log(domain.float() === 3.14) // true
+  ```
 
-string array
+- string array
 
-```js
-const domain = env("ENV_TEST")
-.from(() => "token1, token2, token3")
-console.log(domain.array().length === 3) // true
-```
+  ```js
+  const domain = env("ENV_TEST")
+  .from(() => "token1, token2, token3")
+  console.log(domain.array().length === 3) // true
+  ```
 
-json
+- json
 
-```js
-const domain = env("ENV_TEST")
-.from(() => JSON.stringify({
-    "name" : "@liplum/env"
-}))
-console.log(domain.json().name === "@liplum/env") // true
-```
+  ```js
+  const domain = env("ENV_TEST")
+  .from(() => JSON.stringify({
+      "name" : "@liplum/env"
+  }))
+  console.log(domain.json().name === "@liplum/env") // true
+  ```
 
-port
+- port
 
-```js
-const domain = env("ENV_TEST")
-.from(() => "8080")
-console.log(domain.port() === 8080) // true
-```
+  ```js
+  const domain = env("ENV_TEST")
+  .from(() => "8080")
+  console.log(domain.port() === 8080) // true
+  ```
 
 ## Intergation with dotenv
 
@@ -241,65 +241,65 @@ This package also supports other value types other than strings.
 
 - string
 
-    ```js
-    const value = env("MY_ENV")
-    .bool(()=>"string")
-    console.log(value.get() === "string") // string
-    ```
+  ```js
+  const value = env("MY_ENV")
+  .bool(()=>"string")
+  console.log(value.get() === "string") // string
+  ```
 
 - boolean
-    Under the hood, the package [@liplum/str2bool](https://www.npmjs.com/package/@liplum/str2bool) is used to convert the env string to boolean.
+  Under the hood, the package [@liplum/str2bool](https://www.npmjs.com/package/@liplum/str2bool) is used to convert the env string to boolean.
 
-    ```js
-    const value = env("MY_ENV")
-    .bool(() => true)
-    console.log(domain.get() === true) // true
-    ```
+  ```js
+  const value = env("MY_ENV")
+  .bool(() => true)
+  console.log(domain.get() === true) // true
+  ```
 
 - integer
 
-    ```js
-    const value = env("MY_ENV")
-    .from(() => "1024").int()
-    console.log(domain.get() === 1024) // true
-    // specify the radix
-    console.log(domain.get(16) === 4132) // true
-    ```
+  ```js
+  const value = env("MY_ENV")
+  .from(() => "1024").int()
+  console.log(domain.get() === 1024) // true
+  // specify the radix
+  console.log(domain.get(16) === 4132) // true
+  ```
 
 - float
 
-    ```js
-    const value = env("MY_ENV")
-    .from(() => "3.14").float()
-    console.log(value.float() === 3.14) // true
-    ```
+  ```js
+  const value = env("MY_ENV")
+  .from(() => "3.14").float()
+  console.log(value.float() === 3.14) // true
+  ```
 
 - string array
 
-    A list of strings which can be sperated by ","(comma), "\n"(new line), or " "(whitespace).
+  A list of strings which can be sperated by ","(comma), "\n"(new line), or " "(whitespace).
 
-    ```js
-    const value = env("MY_ENV")
-    .from(() => "token1, token2, token3").array()
-    console.log(domain.get().length === 3) // true
-    ```
+  ```js
+  const value = env("MY_ENV")
+  .from(() => "token1, token2, token3").array()
+  console.log(domain.get().length === 3) // true
+  ```
 
 - port
 
-    ```js
-    const value = env("MY_ENV")
-    .from(() => "8080").port()
-    console.log(domain.get() === 8080) // true
-    ```
+  ```js
+  const value = env("MY_ENV")
+  .from(() => "8080").port()
+  console.log(domain.get() === 8080) // true
+  ```
 
 - url
 
-    You can get a `URL` object by calling `get()`,
-    or get the a `string` object by calling `getString()`.
+  You can get a `URL` object by calling `get()`,
+  or get the a `string` object by calling `getString()`.
 
-    ```js
-    const value = env("MY_ENV")
-    .from(() => "https://github.com").url()
-    console.log(domain.get()) // https://github.com/
-    console.log(domain.getString() === "https://github.com/") // true
-    ```
+  ```js
+  const value = env("MY_ENV")
+  .from(() => "https://github.com").url()
+  console.log(domain.get()) // https://github.com/
+  console.log(domain.getString() === "https://github.com/") // true
+  ```
