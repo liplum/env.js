@@ -293,8 +293,29 @@ class UrlEnv extends EnvMixin<URL | string> {
   }
 }
 
+const nodeEnv = {
+  getOrNull(): string | undefined {
+    return process.env.NODE_ENV
+  },
+  get(): string {
+    const result = this.getOrNull()
+    if (result === undefined) {
+      throw missingEnvError("NODE_ENV")
+    }
+    return result
+  },
+  get development() {
+    return this.getOrNull() === "development"
+  },
+  get production() {
+    return this.getOrNull() === "production"
+  },
+}
+
 const env = (key: string): Env => {
   return new Env({ key })
 }
+
+env.nodeEnv = nodeEnv
 
 export default env
