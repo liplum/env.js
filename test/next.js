@@ -1,5 +1,5 @@
 import test from 'ava'
-import env from "../dist/next.js"
+import env, { NODE_ENV } from "../dist/next.js"
 
 test("default string", t => {
   const v = env("ENV_TEST").string({ default: "default" })
@@ -98,4 +98,10 @@ test("default only once", t => {
   const r2 = v.get()
   t.assert(r1 === r2)
   t.assert(count === 1)
+})
+
+test("NODE_ENV", t => {
+  t.assert(env.NODE_ENV.get() === "test")
+  t.assert(NODE_ENV.from(() => "development").development)
+  t.assert(NODE_ENV.from(() => "production").production)
 })

@@ -303,3 +303,12 @@ This package also supports other value types other than strings.
   console.log(domain.get()) // https://github.com/
   console.log(domain.getString() === "https://github.com/") // true
   ```
+
+[NODE_ENV](https://nodejs.org/en/learn/getting-started/nodejs-the-difference-between-development-and-production)
+
+```js
+import env from 'env'
+import { NODE_ENV } from "env"
+console.log(env.NODE_ENV.development)
+console.log(NODE_ENV.production)
+```

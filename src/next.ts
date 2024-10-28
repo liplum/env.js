@@ -325,6 +325,7 @@ export class NodeEnv {
     }
     return result
   }
+
   get development() {
     return this.getOrNull() === "development"
   }
@@ -338,6 +339,8 @@ const env = (key: string): Env => {
   return new Env({ key })
 }
 
-env.nodeEnv = new NodeEnv()
+env.NODE_ENV = new NodeEnv()
+
+export const NODE_ENV = env.NODE_ENV
 
 export default env
