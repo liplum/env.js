@@ -6,6 +6,20 @@ export type DefaultValue<TDefault> = TDefault | (() => TDefault)
 export type EnvResolver = (key: string) => string | undefined
 export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string> | EnvResolver
 
+const getValueFromStore = ({ key, store }: {
+  key: string
+  store?: EnvStore
+}): string | undefined => {
+  const _store = store ? store : process.env
+  if (_store instanceof Map) {
+    return _store.get(key)
+  }
+  if (typeof _store === "function") {
+    return _store(key)
+  }
+  return _store[key]
+}
+
 export class Env {
   readonly key: string
   readonly store?: EnvStore
@@ -21,16 +35,6 @@ export class Env {
     })
   }
 
-  private getValueFromStore = (): string | undefined => {
-    const store = this.store ? this.store : process.env
-    if (store instanceof Map) {
-      return store.get(this.key)
-    }
-    if (typeof store === "function") {
-      return store(this.key)
-    }
-    return store[this.key]
-  }
 
   get = () => {
     const raw = this.getOrNull()
@@ -40,7 +44,10 @@ export class Env {
     return raw
   }
   getOrNull = () => {
-    return this.getValueFromStore()
+    return getValueFromStore({
+      key: this.key,
+      store: this.store,
+    })
   }
   /**
    * 
@@ -293,29 +300,44 @@ class UrlEnv extends EnvMixin<URL | string> {
   }
 }
 
-const nodeEnv = {
-  getOrNull(): string | undefined {
-    return process.env.NODE_ENV
-  },
-  get(): string {
+export class NodeEnv {
+  readonly key = "NODE_ENV"
+  readonly store?: EnvStore
+  constructor(store?: EnvStore) {
+    this.store = store
+  }
+
+  from = (store: EnvStore): NodeEnv => {
+    return new NodeEnv(store)
+  }
+
+  getOrNull = (): string | undefined => {
+    return getValueFromStore({
+      key: this.key,
+      store: this.store,
+    })
+  }
+
+  get = (): string => {
     const result = this.getOrNull()
     if (result === undefined) {
-      throw missingEnvError("NODE_ENV")
+      throw missingEnvError(this.key)
     }
     return result
-  },
+  }
   get development() {
     return this.getOrNull() === "development"
-  },
+  }
+
   get production() {
     return this.getOrNull() === "production"
-  },
+  }
 }
 
 const env = (key: string): Env => {
   return new Env({ key })
 }
 
-env.nodeEnv = nodeEnv
+env.nodeEnv = new NodeEnv()
 
 export default env
