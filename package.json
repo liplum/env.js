@@ -1,6 +1,6 @@
 {
   "name": "@liplum/env",
-  "version": "0.3.0",
+  "version": "0.2.2",
   "description": "Reading and parsing environment variables from \"process.env\"",
   "main": "dist/index.js",
   "type": "module",
@@ -37,7 +37,12 @@
   "keywords": [
     "env",
     "env-var",
-    "process.env"
+    "environment",
+    "variables",
+    "process.env",
+    "NODE_ENV",
+    "dotenv",
+    ".env"
   ],
   "dependencies": {
     "@liplum/lateinit": "^0.0.1",
