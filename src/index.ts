@@ -1,7 +1,190 @@
 import str2bool from "@liplum/str2bool"
-import { createLateinitGetter } from "./shared.js";
+import { createLateinitGetter } from "./shared.js"
 
-export interface EnvVarBoolOptions {
+export type DefaultValue<TDefault> = TDefault | (() => TDefault)
+
+export type EnvResolver = (key: string) => string | undefined
+export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string> | EnvResolver
+
+const getValueFromStore = ({ key, store }: {
+  key: string
+  store?: EnvStore
+}): string | undefined => {
+  const _store = store ? store : process.env
+  if (_store instanceof Map) {
+    return _store.get(key)
+  }
+  if (typeof _store === "function") {
+    return _store(key)
+  }
+  return _store[key]
+}
+
+export interface IEnv {
+  key?: string
+  get: () => string
+  getOrNull: () => string | undefined
+}
+
+const mixinWithValueEnvs = <TBase extends (new (...args: any[]) => IEnv)>(Base: TBase) => {
+  return class MixinWithValueEnvs extends Base {
+    /**
+ * 
+ * @param options If a default value lazy callback is provided, it will be called only once.
+ * @returns 
+ */
+    string = (options?: { default?: DefaultValue<string> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new StringEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    bool = (options?: { default?: DefaultValue<boolean> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new BoolEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    int = (options?: { default?: DefaultValue<number> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new IntEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    float = (options?: { default?: DefaultValue<number> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new FloatEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    port = (options?: { default?: DefaultValue<number> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new PortEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    array = (options?: { default?: DefaultValue<string[]> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new ArrayEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    url = (options?: { default?: DefaultValue<URL | string> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new UrlEnv(this, createLateinitGetter(defaultValue))
+    }
+  }
+}
+
+export const Env = mixinWithValueEnvs(class implements IEnv {
+  readonly key: string
+  readonly store?: EnvStore
+  constructor({ key, store }: { key: string, store?: EnvStore }) {
+    this.key = key
+    this.store = store
+  }
+
+  from = (store: EnvStore) => {
+    return new Env({
+      key: this.key,
+      store: store,
+    })
+  }
+
+  get = () => {
+    const raw = this.getOrNull()
+    if (raw === undefined) {
+      throw missingEnvError(this.key)
+    }
+    return raw
+  }
+
+  getOrNull = () => {
+    return getValueFromStore({
+      key: this.key,
+      store: this.store,
+    })
+  }
+})
+
+export const EnvFromValue = mixinWithValueEnvs(class implements IEnv {
+  readonly key?: string
+  readonly value?: string
+  constructor({ value }: { value?: string }) {
+    this.value = value
+  }
+
+  get = () => {
+    const raw = this.getOrNull()
+    if (raw === undefined) {
+      throw missingEnvError(this.key)
+    }
+    return raw
+  }
+
+  getOrNull = () => {
+    return this.value
+  }
+})
+
+const missingEnvError = (key?: string): Error => {
+  if (key) {
+    return new Error(`Missing the environment variable "${key}".`)
+  } else {
+    return new Error(`Missing the environment variable.`)
+  }
+}
+
+class EnvMixin<TDefault> {
+  protected readonly env: IEnv
+  protected readonly defaultValue?: () => TDefault
+  constructor(env: IEnv, defaultValue?: () => TDefault) {
+    this.env = env
+    this.defaultValue = defaultValue
+  }
+  protected getDefaultValue = (): TDefault | undefined => {
+    return this.defaultValue?.()
+  }
+  protected missingEnvError = (): Error => {
+    return missingEnvError(this.env.key)
+  }
+}
+
+export class StringEnv extends EnvMixin<string> {
+  getOrNull = (): string | undefined => {
+    const raw = this.env.getOrNull()
+    if (raw === undefined) {
+      return this.getDefaultValue()
+    }
+    return raw
+  }
+  get = (): string => {
+    const result = this.getOrNull()
+    if (result === undefined) {
+      throw this.missingEnvError()
+    }
+    return result
+  }
+}
+export interface BoolEnvValueOptions {
   /**
    * If enabled, "yes" and "y" will be considered as `true`,
    * while "no" and "n" will be considered as `false`.
@@ -19,252 +202,184 @@ export interface EnvVarBoolOptions {
   falsy?: string[];
 }
 
-export interface EnvVarEvalutor {
-  /**
-   * Get the raw value
-   * @returns the raw value of the environment variable, or undefined if it was missing.
-   */
-  raw: () => string | undefined
-  string: () => string
-  int: (radix?: number) => number
-  float: () => number
-  bool: (options?: EnvVarBoolOptions) => boolean
-  json: () => any
-  /**
-   * @deprecated This will be removed at `v1.0.0`.
-   * Dangerous!
-   * @returns the evaluated value
-   */
-  eval: () => any
-  /**
-   * @param splitter By default, it splits a string by white space, new line and comma.
-   * @returns 
-   */
-  array: (splitter?: string | RegExp) => string[]
-  port: () => number
+class BoolEnv extends EnvMixin<boolean> {
+  getOrNull = (options?: BoolEnvValueOptions): boolean | undefined => {
+    const raw = this.env.getOrNull()
+    if (raw === undefined) {
+      return this.getDefaultValue()
+    }
+    return str2bool(raw, {
+      strict: false,
+      ...options
+    })
+  }
+  get = (options?: BoolEnvValueOptions): boolean => {
+    const result = this.getOrNull(options)
+    if (result === undefined) {
+      throw this.missingEnvError()
+    }
+    return result
+  }
 }
 
-export type EnvResolver = (key: string) => string | undefined
-export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string> | EnvResolver
-
-export interface EnvVar<TDefault = string> extends EnvVarEvalutor {
-  readonly key: string
-  /**
-   * Set the default value.
-   * @param defaultValue a string, or a function for lazy evaluation which it will be called only once.
-   * @returns a new EnvVar instance
-   */
-  default: <TNewDefault>(defaultValue: TNewDefault | (() => TNewDefault)) => EnvVar<TNewDefault>
-  /**
-   * Set the env store.
-   * The default enc store is `process.env`.
-   * @param store an object or a map
-   * @returns a new EnvVar instance
-   */
-  from: (store: EnvStore) => EnvVar<TDefault>
-  /**
-   * @deprecated This will be removed at `v1.0.0`.
-   * @returns Return a new EnvVar instance
-   */
-  end: () => EnvVar<TDefault>
+class IntEnv extends EnvMixin<number> {
+  getOrNull = (radix?: number): number | undefined => {
+    const raw = this.env.getOrNull()
+    if (raw === undefined) {
+      return this.getDefaultValue()
+    }
+    return parseInt(raw, radix)
+  }
+  get = (radix?: number): number => {
+    const result = this.getOrNull(radix)
+    if (result === undefined) {
+      throw this.missingEnvError()
+    }
+    return result
+  }
 }
 
-const missingEnv = (key: string): Error => {
-  return new Error(`Missing the environment variable "${key}".`)
-}
-type NonUndefined<T> = T extends undefined ? never : T;
-const unexpectedDefaultValue = <T>(given: NonUndefined<T>, expected: string): Error => {
-  return new Error(`Unexpected default value was given: "${given}", but ${expected} is expected.`)
+class FloatEnv extends EnvMixin<number> {
+  getOrNull = (): number | undefined => {
+    const raw = this.env.getOrNull()
+    if (raw === undefined) {
+      return this.getDefaultValue()
+    }
+    return parseFloat(raw)
+  }
+  get = (): number => {
+    const result = this.getOrNull()
+    if (result === undefined) {
+      throw this.missingEnvError()
+    }
+    return result
+  }
 }
 
-class EnvVarImpl<TDefault = string> implements EnvVar<TDefault> {
-  readonly key: string
-  readonly defaultValue?: () => TDefault
+const checkPort = (p: number) => {
+  return 0 <= p && p <= 65535
+}
+
+class PortEnv extends EnvMixin<number> {
+  getOrNull = (): number | undefined => {
+    const raw = this.env.getOrNull()
+    if (raw === undefined) {
+      return this.getDefaultValue()
+    }
+    const result = parseInt(raw)
+    if (!checkPort(result)) {
+      throw new Error(`${result} is not a valid port number between 0 and 65535.`)
+    }
+    return result
+  }
+  get = (): number => {
+    const result = this.getOrNull()
+    if (result === undefined) {
+      throw this.missingEnvError()
+    }
+    return result
+  }
+}
+const defaultArraySpliter = /\s|,|\r|\n|\r\n/
+class ArrayEnv extends EnvMixin<string[]> {
+  getOrNull = (splitter: string | RegExp = defaultArraySpliter): string[] | undefined => {
+    const raw = this.env.getOrNull()
+    if (raw === undefined) {
+      return this.getDefaultValue()
+    }
+    const vars = raw.split(splitter)
+    return vars.filter(v => Boolean(v))
+  }
+  get = (splitter: string | RegExp = defaultArraySpliter): string[] => {
+    const result = this.getOrNull(splitter)
+    if (result === undefined) {
+      throw this.missingEnvError()
+    }
+    return result
+  }
+}
+
+class UrlEnv extends EnvMixin<URL | string> {
+  getOrNull = (): URL | undefined => {
+    const raw = this.env.getOrNull() ?? this.getDefaultValue()
+    if (raw === undefined) {
+      return
+    }
+    try {
+      const result = new URL(raw)
+      return result
+    } catch (error) {
+      throw new Error(`${raw} is not a valid URL.`)
+    }
+  }
+  get = (): URL => {
+    const result = this.getOrNull()
+    if (result === undefined) {
+      throw this.missingEnvError()
+    }
+    return result
+  }
+  getStringOrNull = (): string | undefined => {
+    const result = this.getOrNull()
+    if (result === undefined) {
+      return
+    }
+    return result.toString()
+  }
+  getString = (): string => {
+    const result = this.getStringOrNull()
+    if (result === undefined) {
+      throw this.missingEnvError()
+    }
+    return result
+  }
+}
+
+export class NodeEnv {
+  readonly key = "NODE_ENV"
   readonly store?: EnvStore
-  constructor({
-    key, defaultValue, store
-  }: {
-    key: string
-    defaultValue?: () => TDefault
-    store?: EnvStore
-  }) {
-    this.key = key
-    this.defaultValue = defaultValue
+  constructor(store?: EnvStore) {
     this.store = store
   }
 
-  default = <TNewDefault>(defaultValue: TNewDefault | (() => TNewDefault)): EnvVar<TNewDefault> => {
-    return new EnvVarImpl<TNewDefault>({
+  from = (store: EnvStore): NodeEnv => {
+    return new NodeEnv(store)
+  }
+
+  getOrNull = (): string | undefined => {
+    return getValueFromStore({
       key: this.key,
-      defaultValue: createLateinitGetter(defaultValue),
       store: this.store,
     })
   }
 
-  from = (store: EnvStore): EnvVar<TDefault> => {
-    return new EnvVarImpl<TDefault>({
-      key: this.key,
-      defaultValue: this.defaultValue,
-      store: store,
-    })
-  }
-
-  end = (): EnvVar<TDefault> => {
-    return new EnvVarImpl<TDefault>(this)
-  }
-
-  private getDefaultValue = (): TDefault | undefined => {
-    return this.defaultValue?.()
-  }
-
-  private getValueFromStore = (): string | undefined => {
-    const store = this.store ? this.store : process.env
-    if (store instanceof Map) {
-      return store.get(this.key)
+  get = (): string => {
+    const result = this.getOrNull()
+    if (result === undefined) {
+      throw missingEnvError(this.key)
     }
-    if (typeof store === "function") {
-      return store(this.key)
-    }
-    return store[this.key]
+    return result
   }
 
-  raw = (): string | undefined => {
-    return this.getValueFromStore()
+  get development() {
+    return this.getOrNull() === "development"
   }
 
-  string = () => {
-    const raw = this.raw()
-    if (raw !== undefined) {
-      return raw
-    } else {
-      const defaultValue = this.getDefaultValue()
-      if (typeof defaultValue === "string") {
-        return defaultValue
-      } else if (defaultValue !== undefined) {
-        throw unexpectedDefaultValue(defaultValue, "a string")
-      }
-    }
-    throw missingEnv(this.key)
-  }
-
-  int = (radix?: number) => {
-    const raw = this.raw()
-    if (raw !== undefined) {
-      return parseInt(raw, radix)
-    } else {
-      const defaultValue = this.getDefaultValue()
-      if (typeof defaultValue === "number" && Number.isInteger(defaultValue)) {
-        return defaultValue
-      } else if (defaultValue !== undefined) {
-        throw unexpectedDefaultValue(defaultValue, "an integer")
-      }
-    }
-    throw missingEnv(this.key)
-  }
-
-  float = () => {
-    const raw = this.raw()
-    if (raw !== undefined) {
-      return parseFloat(raw)
-    } else {
-      const defaultValue = this.getDefaultValue()
-      if (typeof defaultValue === "number") {
-        return defaultValue
-      } if (defaultValue !== undefined) {
-        throw unexpectedDefaultValue(defaultValue, "a float")
-      }
-    }
-    throw missingEnv(this.key)
-  }
-
-  bool = (options?: EnvVarBoolOptions) => {
-    const raw = this.raw()
-    if (raw !== undefined) {
-      return str2bool(raw, {
-        strict: false,
-        ...options
-      })
-    } else {
-      const defaultValue = this.getDefaultValue()
-      if (typeof defaultValue === "boolean") {
-        return defaultValue
-      } if (defaultValue !== undefined) {
-        throw unexpectedDefaultValue(defaultValue, "a boolean")
-      }
-    }
-    throw missingEnv(this.key)
-  }
-
-  json = () => {
-    const raw = this.raw()
-    if (raw !== undefined) {
-      return JSON.parse(raw)
-    } else {
-      const defaultValue = this.getDefaultValue()
-      if (typeof defaultValue === "string") {
-        return JSON.parse(defaultValue)
-      } else if (defaultValue !== undefined) {
-        throw unexpectedDefaultValue(defaultValue, "a JSON string")
-      }
-    }
-    throw missingEnv(this.key)
-  }
-
-  eval = () => {
-    const raw = this.raw()
-    if (raw !== undefined) {
-      return eval(raw)
-    } else {
-      const defaultValue = this.getDefaultValue()
-      if (typeof defaultValue === "string") {
-        return eval(defaultValue)
-      } else if (defaultValue !== undefined) {
-        throw unexpectedDefaultValue(defaultValue, "a string of javascript code")
-      }
-    }
-    throw missingEnv(this.key)
-  }
-
-  array = (splitter: string | RegExp = /\s|,|\r|\n|\r\n/) => {
-    const raw = this.raw()
-    if (raw !== undefined) {
-      const vars = raw.split(splitter)
-      return vars.filter(v => Boolean(v))
-    } else {
-      const defaultValue = this.getDefaultValue()
-      if (Array.isArray(defaultValue)) {
-        return defaultValue
-      } else if (defaultValue !== undefined) {
-        throw unexpectedDefaultValue(defaultValue, "a string of array")
-      }
-    }
-    throw missingEnv(this.key)
-  }
-
-  port = () => {
-    const raw = this.raw()
-    let p: number
-    if (raw !== undefined) {
-      p = parseInt(raw)
-    } else {
-      const defaultValue = this.getDefaultValue()
-      if (typeof defaultValue === "number") {
-        p = defaultValue
-      } if (defaultValue !== undefined) {
-        throw unexpectedDefaultValue(defaultValue, "a float")
-      } else {
-        throw missingEnv(this.key)
-      }
-    }
-    if (0 <= p && p <= 65535) {
-      return p
-    }
-    throw new Error(`${p} is not a valid port number.`)
+  get production() {
+    return this.getOrNull() === "production"
   }
 }
 
-const env = <TDefault = string>(key: string): EnvVar<TDefault> => {
-  return new EnvVarImpl<TDefault>({ key })
+const env = (key: string) => {
+  return new Env({ key })
 }
+
+env.NODE_ENV = new NodeEnv()
+
+env.fromValue = (value?: string) => {
+  return new EnvFromValue({ value })
+}
+
+export const NODE_ENV = env.NODE_ENV
 
 export default env

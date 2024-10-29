@@ -10,8 +10,8 @@
     "dist"
   ],
   "exports": {
-    ".": "./dist/index.js",
-    "./next": "./dist/next.js"
+    ".": "./dist/legacy.js",
+    "./next": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
