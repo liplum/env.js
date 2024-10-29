@@ -125,7 +125,7 @@ export const Env = mixinWithValueEnvs(class implements IEnv {
   }
 })
 
-export const EnvFromValue = mixinWithValueEnvs(class EnvFromValue implements IEnv {
+export const EnvFromValue = mixinWithValueEnvs(class implements IEnv {
   readonly key?: string
   readonly value?: string
   constructor({ value }: { value?: string }) {

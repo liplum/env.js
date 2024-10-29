@@ -312,3 +312,15 @@ import { NODE_ENV } from "env"
 console.log(env.NODE_ENV.development)
 console.log(NODE_ENV.production)
 ```
+
+Parse environment variables directly:
+Use `env.fromValue` to convert string values to specific data types like integers or URLs.
+
+This works well with Next.js's NEXT_PUBLIC_* environment variables,
+please read [this](https://nextjs.org/docs/app/building-your-application/configuring/environment-variables) to learn more about it.
+
+```js
+console.log(env.fromValue("123").int().get()) // 123
+const NEXT_PUBLIC_ENV = "https://example.com"
+console.log(env.fromValue(NEXT_PUBLIC_ENV).url().getString()) // https://example.com/
+```
