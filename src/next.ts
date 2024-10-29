@@ -20,40 +20,16 @@ const getValueFromStore = ({ key, store }: {
   return _store[key]
 }
 
-export class Env {
-  readonly key: string
-  readonly store?: EnvStore
-  constructor({ key, store }: { key: string, store?: EnvStore }) {
-    this.key = key
-    this.store = store
-  }
+export abstract class IEnv {
+  abstract key?: string
+  abstract get: () => string
+  abstract getOrNull: () => string | undefined
 
-  from = (store: EnvStore): Env => {
-    return new Env({
-      key: this.key,
-      store: store,
-    })
-  }
-
-
-  get = () => {
-    const raw = this.getOrNull()
-    if (raw === undefined) {
-      throw missingEnvError(this.key)
-    }
-    return raw
-  }
-  getOrNull = () => {
-    return getValueFromStore({
-      key: this.key,
-      store: this.store,
-    })
-  }
   /**
-   * 
-   * @param options If a default value lazy callback is provided, it will be called only once.
-   * @returns 
-   */
+ * 
+ * @param options If a default value lazy callback is provided, it will be called only once.
+ * @returns 
+ */
   string = (options?: { default?: DefaultValue<string> }) => {
     const { default: defaultValue } = options ?? {}
     return new StringEnv(this, createLateinitGetter(defaultValue))
@@ -114,14 +90,72 @@ export class Env {
   }
 }
 
-const missingEnvError = (key: string): Error => {
-  return new Error(`Missing the environment variable "${key}".`)
+export class Env extends IEnv {
+  readonly key: string
+  readonly store?: EnvStore
+  constructor({ key, store }: { key: string, store?: EnvStore }) {
+    super()
+    this.key = key
+    this.store = store
+  }
+
+  from = (store: EnvStore): Env => {
+    return new Env({
+      key: this.key,
+      store: store,
+    })
+  }
+
+  get = () => {
+    const raw = this.getOrNull()
+    if (raw === undefined) {
+      throw missingEnvError(this.key)
+    }
+    return raw
+  }
+
+  getOrNull = () => {
+    return getValueFromStore({
+      key: this.key,
+      store: this.store,
+    })
+  }
+}
+
+
+export class EnvFromValue extends IEnv {
+  readonly key?: string
+  readonly value?: string
+  constructor({ value }: { value?: string }) {
+    super()
+    this.value = value
+  }
+
+  get = () => {
+    const raw = this.getOrNull()
+    if (raw === undefined) {
+      throw missingEnvError(this.key)
+    }
+    return raw
+  }
+
+  getOrNull = () => {
+    return this.value
+  }
+}
+
+const missingEnvError = (key?: string): Error => {
+  if (key) {
+    return new Error(`Missing the environment variable "${key}".`)
+  } else {
+    return new Error(`Missing the environment variable.`)
+  }
 }
 
 class EnvMixin<TDefault> {
-  protected readonly env: Env
+  protected readonly env: IEnv
   protected readonly defaultValue?: () => TDefault
-  constructor(env: Env, defaultValue?: () => TDefault) {
+  constructor(env: IEnv, defaultValue?: () => TDefault) {
     this.env = env
     this.defaultValue = defaultValue
   }
@@ -340,6 +374,10 @@ const env = (key: string): Env => {
 }
 
 env.NODE_ENV = new NodeEnv()
+
+env.fromValue = (value?: string) => {
+  return new EnvFromValue({ value })
+}
 
 export const NODE_ENV = env.NODE_ENV
 
