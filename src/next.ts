@@ -94,7 +94,7 @@ const mixinWithValueEnvs = <TBase extends (new (...args: any[]) => IEnv)>(Base: 
   }
 }
 
-export const Env = mixinWithValueEnvs(class Env implements IEnv {
+export const Env = mixinWithValueEnvs(class implements IEnv {
   readonly key: string
   readonly store?: EnvStore
   constructor({ key, store }: { key: string, store?: EnvStore }) {
@@ -102,7 +102,7 @@ export const Env = mixinWithValueEnvs(class Env implements IEnv {
     this.store = store
   }
 
-  from = (store: EnvStore): Env => {
+  from = (store: EnvStore) => {
     return new Env({
       key: this.key,
       store: store,

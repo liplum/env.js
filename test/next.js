@@ -105,3 +105,10 @@ test("NODE_ENV", t => {
   t.assert(NODE_ENV.from(() => "development").development)
   t.assert(NODE_ENV.from(() => "production").production)
 })
+
+test("from value", t => {
+  t.assert(env.fromValue("123").int().get() === 123)
+  t.assert(env.fromValue("true").bool().get() === true)
+  t.assert(env.fromValue("3.14").float().get() === 3.14)
+  t.assert(env.fromValue("https://example.com/").url().getString() === "https://example.com/")
+})
