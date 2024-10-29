@@ -20,81 +20,84 @@ const getValueFromStore = ({ key, store }: {
   return _store[key]
 }
 
-export abstract class IEnv {
-  abstract key?: string
-  abstract get: () => string
-  abstract getOrNull: () => string | undefined
+export interface IEnv {
+  key?: string
+  get: () => string
+  getOrNull: () => string | undefined
+}
 
-  /**
+const mixinWithValueEnvs = <TBase extends (new (...args: any[]) => IEnv)>(Base: TBase) => {
+  return class MixinWithValueEnvs extends Base {
+    /**
  * 
  * @param options If a default value lazy callback is provided, it will be called only once.
  * @returns 
  */
-  string = (options?: { default?: DefaultValue<string> }) => {
-    const { default: defaultValue } = options ?? {}
-    return new StringEnv(this, createLateinitGetter(defaultValue))
-  }
-  /**
-   * 
-   * @param options If a default value lazy callback is provided, it will be called only once.
-   * @returns 
-   */
-  bool = (options?: { default?: DefaultValue<boolean> }) => {
-    const { default: defaultValue } = options ?? {}
-    return new BoolEnv(this, createLateinitGetter(defaultValue))
-  }
-  /**
-   * 
-   * @param options If a default value lazy callback is provided, it will be called only once.
-   * @returns 
-   */
-  int = (options?: { default?: DefaultValue<number> }) => {
-    const { default: defaultValue } = options ?? {}
-    return new IntEnv(this, createLateinitGetter(defaultValue))
-  }
-  /**
-   * 
-   * @param options If a default value lazy callback is provided, it will be called only once.
-   * @returns 
-   */
-  float = (options?: { default?: DefaultValue<number> }) => {
-    const { default: defaultValue } = options ?? {}
-    return new FloatEnv(this, createLateinitGetter(defaultValue))
-  }
-  /**
-   * 
-   * @param options If a default value lazy callback is provided, it will be called only once.
-   * @returns 
-   */
-  port = (options?: { default?: DefaultValue<number> }) => {
-    const { default: defaultValue } = options ?? {}
-    return new PortEnv(this, createLateinitGetter(defaultValue))
-  }
-  /**
-   * 
-   * @param options If a default value lazy callback is provided, it will be called only once.
-   * @returns 
-   */
-  array = (options?: { default?: DefaultValue<string[]> }) => {
-    const { default: defaultValue } = options ?? {}
-    return new ArrayEnv(this, createLateinitGetter(defaultValue))
-  }
-  /**
-   * 
-   * @param options If a default value lazy callback is provided, it will be called only once.
-   * @returns 
-   */
-  url = (options?: { default?: DefaultValue<URL | string> }) => {
-    const { default: defaultValue } = options ?? {}
-    return new UrlEnv(this, createLateinitGetter(defaultValue))
+    string = (options?: { default?: DefaultValue<string> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new StringEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    bool = (options?: { default?: DefaultValue<boolean> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new BoolEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    int = (options?: { default?: DefaultValue<number> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new IntEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    float = (options?: { default?: DefaultValue<number> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new FloatEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    port = (options?: { default?: DefaultValue<number> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new PortEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    array = (options?: { default?: DefaultValue<string[]> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new ArrayEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    url = (options?: { default?: DefaultValue<URL | string> }) => {
+      const { default: defaultValue } = options ?? {}
+      return new UrlEnv(this, createLateinitGetter(defaultValue))
+    }
   }
 }
 
-export class Env extends IEnv {
+export const Env = mixinWithValueEnvs(class Env implements IEnv {
   readonly key: string
   readonly store?: EnvStore
   constructor({ key, store }: { key: string, store?: EnvStore }) {
-    super()
     this.key = key
     this.store = store
   }
@@ -120,14 +123,12 @@ export class Env extends IEnv {
       store: this.store,
     })
   }
-}
+})
 
-
-export class EnvFromValue extends IEnv {
+export const EnvFromValue = mixinWithValueEnvs(class EnvFromValue implements IEnv {
   readonly key?: string
   readonly value?: string
   constructor({ value }: { value?: string }) {
-    super()
     this.value = value
   }
 
@@ -142,7 +143,7 @@ export class EnvFromValue extends IEnv {
   getOrNull = () => {
     return this.value
   }
-}
+})
 
 const missingEnvError = (key?: string): Error => {
   if (key) {
@@ -369,7 +370,7 @@ export class NodeEnv {
   }
 }
 
-const env = (key: string): Env => {
+const env = (key: string) => {
   return new Env({ key })
 }
 
