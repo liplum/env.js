@@ -3,6 +3,91 @@ import { createLateinitGetter } from "./shared.js"
 
 export type DefaultValue<TDefault> = TDefault | (() => TDefault)
 
+export interface IEnv {
+  key?: string
+  get: () => string
+  getOrNull: () => string | undefined
+}
+
+export interface IEnvCreator {
+  string: (options?: { default?: DefaultValue<string> }) => IStringEnv
+  bool: (options?: { default?: DefaultValue<boolean> }) => IBoolEnv
+  int: (options?: { default?: DefaultValue<number> }) => IIntEnv
+  float: (options?: { default?: DefaultValue<number> }) => IFloatEnv
+  port: (options?: { default?: DefaultValue<number> }) => IPortEnv
+  array: (options?: { default?: DefaultValue<string[]> }) => IArrayEnv
+  url: (options?: { default?: DefaultValue<URL | string> }) => IUrlEnv
+}
+export type Constructor<T = {}> = new (...args: any[]) => T
+export type IEnvObj = IEnv & IEnvCreator
+
+const mixinWithValueEnvs = <TBase extends (new (...args: any[]) => IEnv)>(Base: TBase) => {
+  return class MixinWithValueEnvs extends Base implements IEnvCreator {
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    string = (options?: { default?: DefaultValue<string> }): IStringEnv => {
+      const { default: defaultValue } = options ?? {}
+      return new StringEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    bool = (options?: { default?: DefaultValue<boolean> }): IBoolEnv => {
+      const { default: defaultValue } = options ?? {}
+      return new BoolEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    int = (options?: { default?: DefaultValue<number> }): IIntEnv => {
+      const { default: defaultValue } = options ?? {}
+      return new IntEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    float = (options?: { default?: DefaultValue<number> }): IFloatEnv => {
+      const { default: defaultValue } = options ?? {}
+      return new FloatEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    port = (options?: { default?: DefaultValue<number> }): IPortEnv => {
+      const { default: defaultValue } = options ?? {}
+      return new PortEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    array = (options?: { default?: DefaultValue<string[]> }): IArrayEnv => {
+      const { default: defaultValue } = options ?? {}
+      return new ArrayEnv(this, createLateinitGetter(defaultValue))
+    }
+    /**
+     * 
+     * @param options If a default value lazy callback is provided, it will be called only once.
+     * @returns 
+     */
+    url = (options?: { default?: DefaultValue<URL | string> }): IUrlEnv => {
+      const { default: defaultValue } = options ?? {}
+      return new UrlEnv(this, createLateinitGetter(defaultValue))
+    }
+  }
+}
 export type EnvResolver = (key: string) => string | undefined
 export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string> | EnvResolver
 
@@ -20,81 +105,12 @@ const getValueFromStore = ({ key, store }: {
   return _store[key]
 }
 
-export interface IEnv {
-  key?: string
-  get: () => string
-  getOrNull: () => string | undefined
+export interface EnvObj extends IEnvObj {
+  readonly key: string
+  from: (store: EnvStore) => EnvObj
 }
 
-const mixinWithValueEnvs = <TBase extends (new (...args: any[]) => IEnv)>(Base: TBase) => {
-  return class MixinWithValueEnvs extends Base {
-    /**
- * 
- * @param options If a default value lazy callback is provided, it will be called only once.
- * @returns 
- */
-    string = (options?: { default?: DefaultValue<string> }) => {
-      const { default: defaultValue } = options ?? {}
-      return new StringEnv(this, createLateinitGetter(defaultValue))
-    }
-    /**
-     * 
-     * @param options If a default value lazy callback is provided, it will be called only once.
-     * @returns 
-     */
-    bool = (options?: { default?: DefaultValue<boolean> }) => {
-      const { default: defaultValue } = options ?? {}
-      return new BoolEnv(this, createLateinitGetter(defaultValue))
-    }
-    /**
-     * 
-     * @param options If a default value lazy callback is provided, it will be called only once.
-     * @returns 
-     */
-    int = (options?: { default?: DefaultValue<number> }) => {
-      const { default: defaultValue } = options ?? {}
-      return new IntEnv(this, createLateinitGetter(defaultValue))
-    }
-    /**
-     * 
-     * @param options If a default value lazy callback is provided, it will be called only once.
-     * @returns 
-     */
-    float = (options?: { default?: DefaultValue<number> }) => {
-      const { default: defaultValue } = options ?? {}
-      return new FloatEnv(this, createLateinitGetter(defaultValue))
-    }
-    /**
-     * 
-     * @param options If a default value lazy callback is provided, it will be called only once.
-     * @returns 
-     */
-    port = (options?: { default?: DefaultValue<number> }) => {
-      const { default: defaultValue } = options ?? {}
-      return new PortEnv(this, createLateinitGetter(defaultValue))
-    }
-    /**
-     * 
-     * @param options If a default value lazy callback is provided, it will be called only once.
-     * @returns 
-     */
-    array = (options?: { default?: DefaultValue<string[]> }) => {
-      const { default: defaultValue } = options ?? {}
-      return new ArrayEnv(this, createLateinitGetter(defaultValue))
-    }
-    /**
-     * 
-     * @param options If a default value lazy callback is provided, it will be called only once.
-     * @returns 
-     */
-    url = (options?: { default?: DefaultValue<URL | string> }) => {
-      const { default: defaultValue } = options ?? {}
-      return new UrlEnv(this, createLateinitGetter(defaultValue))
-    }
-  }
-}
-
-export const Env = mixinWithValueEnvs(class implements IEnv {
+const Env: Constructor<EnvObj> = mixinWithValueEnvs(class implements IEnv {
   readonly key: string
   readonly store?: EnvStore
   constructor({ key, store }: { key: string, store?: EnvStore }) {
@@ -125,7 +141,7 @@ export const Env = mixinWithValueEnvs(class implements IEnv {
   }
 })
 
-export const EnvFromValue = mixinWithValueEnvs(class implements IEnv {
+const EnvFromValue: Constructor<IEnvObj> = mixinWithValueEnvs(class implements IEnv {
   readonly key?: string
   readonly value?: string
   constructor({ value }: { value?: string }) {
@@ -168,7 +184,12 @@ class EnvMixin<TDefault> {
   }
 }
 
-export class StringEnv extends EnvMixin<string> {
+export interface IStringEnv {
+  getOrNull: () => string | undefined
+  get: () => string
+}
+
+class StringEnv extends EnvMixin<string> implements IStringEnv {
   getOrNull = (): string | undefined => {
     const raw = this.env.getOrNull()
     if (raw === undefined) {
@@ -184,6 +205,7 @@ export class StringEnv extends EnvMixin<string> {
     return result
   }
 }
+
 export interface BoolEnvValueOptions {
   /**
    * If enabled, "yes" and "y" will be considered as `true`,
@@ -191,19 +213,24 @@ export interface BoolEnvValueOptions {
    *
    * false by default.
    */
-  yesOrNo?: boolean;
+  yesOrNo?: boolean
   /**
    * The strings will be considered as `true`
    */
-  truthy?: string[];
+  truthy?: string[]
   /**
    * The strings will be considered as `false`
    */
-  falsy?: string[];
+  falsy?: string[]
 }
 
-class BoolEnv extends EnvMixin<boolean> {
-  getOrNull = (options?: BoolEnvValueOptions): boolean | undefined => {
+export interface IBoolEnv {
+  getOrNull: (options?: BoolEnvValueOptions) => boolean | undefined
+  get: (options?: BoolEnvValueOptions) => boolean
+}
+
+class BoolEnv extends EnvMixin<boolean> implements IBoolEnv {
+  getOrNull = (options?: BoolEnvValueOptions) => {
     const raw = this.env.getOrNull()
     if (raw === undefined) {
       return this.getDefaultValue()
@@ -213,7 +240,7 @@ class BoolEnv extends EnvMixin<boolean> {
       ...options
     })
   }
-  get = (options?: BoolEnvValueOptions): boolean => {
+  get = (options?: BoolEnvValueOptions) => {
     const result = this.getOrNull(options)
     if (result === undefined) {
       throw this.missingEnvError()
@@ -222,15 +249,20 @@ class BoolEnv extends EnvMixin<boolean> {
   }
 }
 
-class IntEnv extends EnvMixin<number> {
-  getOrNull = (radix?: number): number | undefined => {
+export interface IIntEnv {
+  getOrNull: (radix?: number) => number | undefined
+  get: (radix?: number) => number
+}
+
+class IntEnv extends EnvMixin<number> implements IIntEnv {
+  getOrNull = (radix?: number) => {
     const raw = this.env.getOrNull()
     if (raw === undefined) {
       return this.getDefaultValue()
     }
     return parseInt(raw, radix)
   }
-  get = (radix?: number): number => {
+  get = (radix?: number) => {
     const result = this.getOrNull(radix)
     if (result === undefined) {
       throw this.missingEnvError()
@@ -239,15 +271,20 @@ class IntEnv extends EnvMixin<number> {
   }
 }
 
-class FloatEnv extends EnvMixin<number> {
-  getOrNull = (): number | undefined => {
+export interface IFloatEnv {
+  getOrNull: () => number | undefined
+  get: () => number
+}
+
+class FloatEnv extends EnvMixin<number> implements IFloatEnv {
+  getOrNull = () => {
     const raw = this.env.getOrNull()
     if (raw === undefined) {
       return this.getDefaultValue()
     }
     return parseFloat(raw)
   }
-  get = (): number => {
+  get = () => {
     const result = this.getOrNull()
     if (result === undefined) {
       throw this.missingEnvError()
@@ -260,8 +297,13 @@ const checkPort = (p: number) => {
   return 0 <= p && p <= 65535
 }
 
-class PortEnv extends EnvMixin<number> {
-  getOrNull = (): number | undefined => {
+export interface IPortEnv {
+  getOrNull: () => number | undefined
+  get: () => number
+}
+
+class PortEnv extends EnvMixin<number> implements IPortEnv {
+  getOrNull = () => {
     const raw = this.env.getOrNull()
     if (raw === undefined) {
       return this.getDefaultValue()
@@ -272,7 +314,7 @@ class PortEnv extends EnvMixin<number> {
     }
     return result
   }
-  get = (): number => {
+  get = () => {
     const result = this.getOrNull()
     if (result === undefined) {
       throw this.missingEnvError()
@@ -280,9 +322,15 @@ class PortEnv extends EnvMixin<number> {
     return result
   }
 }
+
+export interface IArrayEnv {
+  getOrNull: (splitter?: string | RegExp) => string[] | undefined
+  get: (splitter?: string | RegExp) => string[]
+}
+
 const defaultArraySpliter = /\s|,|\r|\n|\r\n/
-class ArrayEnv extends EnvMixin<string[]> {
-  getOrNull = (splitter: string | RegExp = defaultArraySpliter): string[] | undefined => {
+class ArrayEnv extends EnvMixin<string[]> implements IArrayEnv {
+  getOrNull = (splitter: string | RegExp = defaultArraySpliter) => {
     const raw = this.env.getOrNull()
     if (raw === undefined) {
       return this.getDefaultValue()
@@ -290,7 +338,7 @@ class ArrayEnv extends EnvMixin<string[]> {
     const vars = raw.split(splitter)
     return vars.filter(v => Boolean(v))
   }
-  get = (splitter: string | RegExp = defaultArraySpliter): string[] => {
+  get = (splitter: string | RegExp = defaultArraySpliter) => {
     const result = this.getOrNull(splitter)
     if (result === undefined) {
       throw this.missingEnvError()
@@ -299,8 +347,15 @@ class ArrayEnv extends EnvMixin<string[]> {
   }
 }
 
-class UrlEnv extends EnvMixin<URL | string> {
-  getOrNull = (): URL | undefined => {
+export interface IUrlEnv {
+  getOrNull: () => URL | undefined
+  get: () => URL
+  getStringOrNull: () => string | undefined
+  getString: () => string
+}
+
+class UrlEnv extends EnvMixin<URL | string> implements IUrlEnv {
+  getOrNull = () => {
     const raw = this.env.getOrNull() ?? this.getDefaultValue()
     if (raw === undefined) {
       return
@@ -312,21 +367,21 @@ class UrlEnv extends EnvMixin<URL | string> {
       throw new Error(`${raw} is not a valid URL.`)
     }
   }
-  get = (): URL => {
+  get = () => {
     const result = this.getOrNull()
     if (result === undefined) {
       throw this.missingEnvError()
     }
     return result
   }
-  getStringOrNull = (): string | undefined => {
+  getStringOrNull = () => {
     const result = this.getOrNull()
     if (result === undefined) {
       return
     }
     return result.toString()
   }
-  getString = (): string => {
+  getString = () => {
     const result = this.getStringOrNull()
     if (result === undefined) {
       throw this.missingEnvError()
@@ -370,13 +425,13 @@ export class NodeEnv {
   }
 }
 
-const env = (key: string) => {
+const env = (key: string): EnvObj => {
   return new Env({ key })
 }
 
 env.NODE_ENV = new NodeEnv()
 
-env.fromValue = (value?: string) => {
+env.fromValue = (value?: string): IEnvObj => {
   return new EnvFromValue({ value })
 }
 
