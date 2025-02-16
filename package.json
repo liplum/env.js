@@ -1,6 +1,6 @@
 {
   "name": "@liplum/env",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Reading and parsing environment variables from \"process.env\"",
   "main": "dist/index.js",
   "type": "module",
@@ -10,8 +10,7 @@
     "dist"
   ],
   "exports": {
-    ".": "./dist/legacy.js",
-    "./next": "./dist/index.js"
+    ".": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -48,7 +47,7 @@
     "@liplum/lateinit": "^0.0.1",
     "@liplum/str2bool": "^0.0.1"
   },
-  "packageManager": "pnpm@9.9.0",
+  "packageManager": "pnpm@10.4.0",
   "ava": {
     "files": [
       "test/*.js"
