@@ -9,6 +9,7 @@ import { IPortEnv, PortEnv } from "./env/port.js"
 import { IStringEnv, StringEnv } from "./env/string.js"
 import { IUrlEnv, UrlEnv } from "./env/url.js"
 import { IEnv, DefaultValue, Constructor, EnvStore } from "./model.js"
+import { NextPhase } from "./nextjs.js"
 export * from "./model.js"
 export {
   IArrayEnv,
@@ -161,6 +162,7 @@ const env = (key: string): EnvObj => {
 }
 
 env.NODE_ENV = new NodeEnv()
+env.NEXT_PHASE = new NextPhase()
 
 env.fromValue = (value?: string): IEnvObj => {
   return new EnvFromValue({ value })

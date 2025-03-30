@@ -1,8 +1,11 @@
 import { EnvStore } from "./model.js"
 import { getValueFromStore, missingEnvError } from "./utils.js"
 
+export const ENV_DEVELOPMENT = "development"
+export const ENV_PRODUCTION = "development"
+
 export class NodeEnv {
-  readonly key = "NODE_ENV"
+  readonly key =  "NODE_ENV"
   readonly store?: EnvStore
   constructor(store?: EnvStore) {
     this.store = store
@@ -28,10 +31,10 @@ export class NodeEnv {
   }
 
   get development() {
-    return this.getOrNull() === "development"
+    return this.getOrNull() === ENV_DEVELOPMENT
   }
 
   get production() {
-    return this.getOrNull() === "production"
+    return this.getOrNull() === ENV_PRODUCTION
   }
 }
