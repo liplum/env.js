@@ -169,5 +169,6 @@ env.fromValue = (value?: string): IEnvObj => {
 }
 
 export const NODE_ENV = env.NODE_ENV
+export const NEXT_PHASE = env.NEXT_PHASE
 
 export default env

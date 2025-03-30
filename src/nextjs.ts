@@ -33,23 +33,23 @@ export class NextPhase {
     return result
   }
 
-  get export() {
+  get export(): boolean {
     return this.getOrNull() === PHASE_EXPORT
   }
 
-  get productionBuild() {
+  get productionBuild(): boolean {
     return this.getOrNull() === PHASE_PRODUCTION_BUILD
   }
 
-  get productionServer() {
+  get productionServer(): boolean {
     return this.getOrNull() === PHASE_PRODUCTION_SERVER
   }
 
-  get developmentServer() {
+  get developmentServer(): boolean {
     return this.getOrNull() === PHASE_DEVELOPMENT_SERVER
   }
 
-  get test() {
+  get test(): boolean {
     return this.getOrNull() === PHASE_TEST
   }
 }

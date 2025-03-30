@@ -3,9 +3,11 @@ import { getValueFromStore, missingEnvError } from "./utils.js"
 
 export const ENV_DEVELOPMENT = "development"
 export const ENV_PRODUCTION = "development"
+export const ENV_TEST = "test"
+export const ENV_STAGING = "staging"
 
 export class NodeEnv {
-  readonly key =  "NODE_ENV"
+  readonly key = "NODE_ENV"
   readonly store?: EnvStore
   constructor(store?: EnvStore) {
     this.store = store
@@ -30,11 +32,19 @@ export class NodeEnv {
     return result
   }
 
-  get development() {
+  get development(): boolean {
     return this.getOrNull() === ENV_DEVELOPMENT
   }
 
-  get production() {
+  get production(): boolean {
     return this.getOrNull() === ENV_PRODUCTION
+  }
+
+  get test(): boolean {
+    return this.getOrNull() === ENV_TEST
+  }
+  
+  get staging(): boolean {
+    return this.getOrNull() === ENV_STAGING
   }
 }

@@ -153,6 +153,17 @@ This package also supports other value types other than strings.
   console.log(domain.getString() === "https://github.com/") // true
   ```
 
+### From Value
+
+Parse environment variables directly:
+Use `env.fromValue` to convert string values to specific data types like integers or URLs.
+
+```js
+console.log(env.fromValue("123").int().get()) // 123
+const ENV_VALUE = "https://example.com"
+console.log(env.fromValue(ENV_VALUE).url().getString()) // https://example.com/
+```
+
 ### NODE_ENV
 
 Read the [NODE_ENV](https://nodejs.org/en/learn/getting-started/nodejs-the-difference-between-development-and-production) document to learn more.
@@ -161,22 +172,42 @@ Read the [NODE_ENV](https://nodejs.org/en/learn/getting-started/nodejs-the-diffe
 import env from 'env'
 import { NODE_ENV } from "env"
 console.log(env.NODE_ENV.development)
+console.log(env.NODE_ENV.production)
+console.log(env.NODE_ENV.test)
+console.log(env.NODE_ENV.staging)
+
 console.log(NODE_ENV.production)
 ```
 
-Parse environment variables directly:
-Use `env.fromValue` to convert string values to specific data types like integers or URLs.
+### Integration with Next.js
 
-This works well with Next.js's NEXT_PUBLIC_* environment variables,
+#### NEXT_PUBLIC
+
+`env.fromValue` works well with Next.js's NEXT_PUBLIC_* environment variables,
 please read [this](https://nextjs.org/docs/app/building-your-application/configuring/environment-variables) to learn more about it.
 
 ```js
-console.log(env.fromValue("123").int().get()) // 123
-const NEXT_PUBLIC_ENV = "https://example.com"
-console.log(env.fromValue(NEXT_PUBLIC_ENV).url().getString()) // https://example.com/
+const NEXT_PUBLIC_ENDPOINT = "https://example.com"
+console.log(env.fromValue(NEXT_PUBLIC_ENDPOINT).url().getString()) // https://example.com/
 ```
 
-## Integration with dotenv
+#### NEXT_PHASE
+
+Read the [NEXT_PHASE](https://nextjs.org/docs/app/api-reference/config/next-config-js#phase) document to lean more.
+
+```js
+import env from 'env'
+import { NEXT_PHASE } from "env"
+console.log(env.NEXT_PHASE.export)
+console.log(env.NEXT_PHASE.productionBuild)
+console.log(env.NEXT_PHASE.productionServer)
+console.log(env.NEXT_PHASE.developmentServer)
+console.log(env.NEXT_PHASE.test)
+
+console.log(NEXT_PHASE.productionBuild)
+```
+
+### Integration with dotenv
 
 You can import the `dotenv/config` to load the .env file under the current working directory.
 
