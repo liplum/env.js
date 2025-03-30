@@ -222,4 +222,7 @@ import dotenv from "dotenv"
 dotenv.config(...options)
 ```
 
+> [!CAUTION]
+> You have to load the `.env` before all `env().foo().get/getOrNull()` calls.
+
 To lean more about `dotenv`, please read [its document](https://www.npmjs.com/package/dotenv).
