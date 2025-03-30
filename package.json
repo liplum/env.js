@@ -42,7 +42,9 @@
     "process.env",
     "NODE_ENV",
     "dotenv",
-    ".env"
+    ".env",
+    "next",
+    "nextjs"
   ],
   "dependencies": {
     "@liplum/lateinit": "^0.0.1",
