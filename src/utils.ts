@@ -1,4 +1,4 @@
-import { EnvStore } from "./model"
+import { EnvStore } from "./model.js"
 
 export const getValueFromStore = ({ key, store }: {
   key: string

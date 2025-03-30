@@ -1,5 +1,5 @@
-import { EnvStore } from "./model"
-import { getValueFromStore, missingEnvError } from "./utils"
+import { EnvStore } from "./model.js"
+import { getValueFromStore, missingEnvError } from "./utils.js"
 
 export class NodeEnv {
   readonly key = "NODE_ENV"

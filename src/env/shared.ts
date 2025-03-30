@@ -1,5 +1,5 @@
 import { IEnv } from "../model"
-import { missingEnvError } from "../utils"
+import { missingEnvError } from "../utils.js"
 
 export class EnvMixin<TDefault> {
   protected readonly env: IEnv

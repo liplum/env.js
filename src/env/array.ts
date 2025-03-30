@@ -1,4 +1,4 @@
-import { EnvMixin } from "./shared"
+import { EnvMixin } from "./shared.js"
 
 export interface IArrayEnv {
   getOrNull: (splitter?: string | RegExp) => string[] | undefined

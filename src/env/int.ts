@@ -1,4 +1,4 @@
-import { EnvMixin } from "./shared"
+import { EnvMixin } from "./shared.js"
 
 export interface IIntEnv {
   getOrNull: (radix?: number) => number | undefined

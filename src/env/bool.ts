@@ -1,5 +1,5 @@
 import str2bool from "@liplum/str2bool"
-import { EnvMixin } from "./shared"
+import { EnvMixin } from "./shared.js"
 
 export interface BoolEnvValueOptions {
   /**
