@@ -1,25 +1,9 @@
 import str2bool from "@liplum/str2bool"
 import { createLateinitGetter } from "./shared.js"
-
-export type DefaultValue<TDefault> = TDefault | (() => TDefault)
-
-export interface IEnv {
-  key?: string
-  get: () => string
-  getOrNull: () => string | undefined
-}
-
-export interface IEnvCreator {
-  string: (options?: { default?: DefaultValue<string> }) => IStringEnv
-  bool: (options?: { default?: DefaultValue<boolean> }) => IBoolEnv
-  int: (options?: { default?: DefaultValue<number> }) => IIntEnv
-  float: (options?: { default?: DefaultValue<number> }) => IFloatEnv
-  port: (options?: { default?: DefaultValue<number> }) => IPortEnv
-  array: (options?: { default?: DefaultValue<string[]> }) => IArrayEnv
-  url: (options?: { default?: DefaultValue<URL | string> }) => IUrlEnv
-}
-export type Constructor<T = {}> = new (...args: any[]) => T
-export type IEnvObj = IEnv & IEnvCreator
+import { getValueFromStore, missingEnvError } from "./utils.js"
+import { NodeEnv } from "./node.js"
+import { IEnv, IEnvCreator, DefaultValue, IStringEnv, IBoolEnv, IIntEnv, IFloatEnv, IPortEnv, IArrayEnv, IUrlEnv, Constructor, EnvObj, EnvStore, IEnvObj, BoolEnvValueOptions } from "./model.js"
+export * from "./model.js"
 
 const mixinWithValueEnvs = <TBase extends (new (...args: any[]) => IEnv)>(Base: TBase) => {
   return class MixinWithValueEnvs extends Base implements IEnvCreator {
@@ -88,27 +72,6 @@ const mixinWithValueEnvs = <TBase extends (new (...args: any[]) => IEnv)>(Base: 
     }
   }
 }
-export type EnvResolver = (key: string) => string | undefined
-export type EnvStore = typeof process.env | Record<string, string | undefined> | Map<string, string> | EnvResolver
-
-const getValueFromStore = ({ key, store }: {
-  key: string
-  store?: EnvStore
-}): string | undefined => {
-  const _store = store ? store : process.env
-  if (_store instanceof Map) {
-    return _store.get(key)
-  }
-  if (typeof _store === "function") {
-    return _store(key)
-  }
-  return _store[key]
-}
-
-export interface EnvObj extends IEnvObj {
-  readonly key: string
-  from: (store: EnvStore) => EnvObj
-}
 
 const Env: Constructor<EnvObj> = mixinWithValueEnvs(class implements IEnv {
   readonly key: string
@@ -161,14 +124,6 @@ const EnvFromValue: Constructor<IEnvObj> = mixinWithValueEnvs(class implements I
   }
 })
 
-const missingEnvError = (key?: string): Error => {
-  if (key) {
-    return new Error(`Missing the environment variable "${key}".`)
-  } else {
-    return new Error(`Missing the environment variable.`)
-  }
-}
-
 class EnvMixin<TDefault> {
   protected readonly env: IEnv
   protected readonly defaultValue?: () => TDefault
@@ -182,11 +137,6 @@ class EnvMixin<TDefault> {
   protected missingEnvError = (): Error => {
     return missingEnvError(this.env.key)
   }
-}
-
-export interface IStringEnv {
-  getOrNull: () => string | undefined
-  get: () => string
 }
 
 class StringEnv extends EnvMixin<string> implements IStringEnv {
@@ -204,29 +154,6 @@ class StringEnv extends EnvMixin<string> implements IStringEnv {
     }
     return result
   }
-}
-
-export interface BoolEnvValueOptions {
-  /**
-   * If enabled, "yes" and "y" will be considered as `true`,
-   * while "no" and "n" will be considered as `false`.
-   *
-   * false by default.
-   */
-  yesOrNo?: boolean
-  /**
-   * The strings will be considered as `true`
-   */
-  truthy?: string[]
-  /**
-   * The strings will be considered as `false`
-   */
-  falsy?: string[]
-}
-
-export interface IBoolEnv {
-  getOrNull: (options?: BoolEnvValueOptions) => boolean | undefined
-  get: (options?: BoolEnvValueOptions) => boolean
 }
 
 class BoolEnv extends EnvMixin<boolean> implements IBoolEnv {
@@ -249,11 +176,6 @@ class BoolEnv extends EnvMixin<boolean> implements IBoolEnv {
   }
 }
 
-export interface IIntEnv {
-  getOrNull: (radix?: number) => number | undefined
-  get: (radix?: number) => number
-}
-
 class IntEnv extends EnvMixin<number> implements IIntEnv {
   getOrNull = (radix?: number) => {
     const raw = this.env.getOrNull()
@@ -271,10 +193,6 @@ class IntEnv extends EnvMixin<number> implements IIntEnv {
   }
 }
 
-export interface IFloatEnv {
-  getOrNull: () => number | undefined
-  get: () => number
-}
 
 class FloatEnv extends EnvMixin<number> implements IFloatEnv {
   getOrNull = () => {
@@ -295,11 +213,6 @@ class FloatEnv extends EnvMixin<number> implements IFloatEnv {
 
 const checkPort = (p: number) => {
   return 0 <= p && p <= 65535
-}
-
-export interface IPortEnv {
-  getOrNull: () => number | undefined
-  get: () => number
 }
 
 class PortEnv extends EnvMixin<number> implements IPortEnv {
@@ -323,10 +236,6 @@ class PortEnv extends EnvMixin<number> implements IPortEnv {
   }
 }
 
-export interface IArrayEnv {
-  getOrNull: (splitter?: string | RegExp) => string[] | undefined
-  get: (splitter?: string | RegExp) => string[]
-}
 
 const defaultArraySpliter = /\s|,|\r|\n|\r\n/
 class ArrayEnv extends EnvMixin<string[]> implements IArrayEnv {
@@ -345,13 +254,6 @@ class ArrayEnv extends EnvMixin<string[]> implements IArrayEnv {
     }
     return result
   }
-}
-
-export interface IUrlEnv {
-  getOrNull: () => URL | undefined
-  get: () => URL
-  getStringOrNull: () => string | undefined
-  getString: () => string
 }
 
 class UrlEnv extends EnvMixin<URL | string> implements IUrlEnv {
@@ -387,41 +289,6 @@ class UrlEnv extends EnvMixin<URL | string> implements IUrlEnv {
       throw this.missingEnvError()
     }
     return result
-  }
-}
-
-export class NodeEnv {
-  readonly key = "NODE_ENV"
-  readonly store?: EnvStore
-  constructor(store?: EnvStore) {
-    this.store = store
-  }
-
-  from = (store: EnvStore): NodeEnv => {
-    return new NodeEnv(store)
-  }
-
-  getOrNull = (): string | undefined => {
-    return getValueFromStore({
-      key: this.key,
-      store: this.store,
-    })
-  }
-
-  get = (): string => {
-    const result = this.getOrNull()
-    if (result === undefined) {
-      throw missingEnvError(this.key)
-    }
-    return result
-  }
-
-  get development() {
-    return this.getOrNull() === "development"
-  }
-
-  get production() {
-    return this.getOrNull() === "production"
   }
 }
 
