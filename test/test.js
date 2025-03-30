@@ -1,5 +1,13 @@
 import test from 'ava'
 import env, { NODE_ENV } from "../dist/index.js"
+import {
+  PHASE_EXPORT,
+  PHASE_PRODUCTION_BUILD,
+  PHASE_PRODUCTION_SERVER,
+  PHASE_DEVELOPMENT_SERVER,
+  PHASE_INFO,
+  PHASE_TEST,
+} from 'next/constants.js';
 
 test("default string", t => {
   const v = env("ENV_TEST").string({ default: "default" })
@@ -101,9 +109,11 @@ test("default only once", t => {
 })
 
 test("NODE_ENV", t => {
-  t.assert(env.NODE_ENV.get() === "test")
-  t.assert(NODE_ENV.from(() => "development").development)
-  t.assert(NODE_ENV.from(() => "production").production)
+  t.true(env.NODE_ENV.get() === "test")
+  t.true(NODE_ENV.from(() => "development").development)
+  t.true(NODE_ENV.from(() => "production").production)
+  t.true(NODE_ENV.from(() => "test").test)
+  t.true(NODE_ENV.from(() => "staging").staging)
 })
 
 test("from value", t => {
@@ -111,4 +121,13 @@ test("from value", t => {
   t.assert(env.fromValue("true").bool().get() === true)
   t.assert(env.fromValue("3.14").float().get() === 3.14)
   t.assert(env.fromValue("https://example.com/").url().getString() === "https://example.com/")
+})
+
+test("NEXT_PHASE", t => {
+  t.true(env.NEXT_PHASE.from(() => PHASE_PRODUCTION_BUILD).productionBuild)
+  t.true(env.NEXT_PHASE.from(() => PHASE_PRODUCTION_SERVER).productionServer)
+  t.true(env.NEXT_PHASE.from(() => PHASE_DEVELOPMENT_SERVER).developmentServer)
+  t.true(env.NEXT_PHASE.from(() => PHASE_EXPORT).export)
+  t.true(env.NEXT_PHASE.from(() => PHASE_TEST).test)
+  t.true(env.NEXT_PHASE.from(() => PHASE_INFO).info)
 })

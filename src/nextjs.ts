@@ -6,6 +6,7 @@ const PHASE_PRODUCTION_BUILD = 'phase-production-build'
 const PHASE_PRODUCTION_SERVER = 'phase-production-server'
 const PHASE_DEVELOPMENT_SERVER = 'phase-development-server'
 const PHASE_TEST = 'phase-test'
+const PHASE_INFO = 'phase-info'
 
 export class NextPhase {
   readonly key = "NEXT_PHASE"
@@ -51,5 +52,9 @@ export class NextPhase {
 
   get test(): boolean {
     return this.getOrNull() === PHASE_TEST
+  }
+  
+  get info(): boolean {
+    return this.getOrNull() === PHASE_INFO
   }
 }
