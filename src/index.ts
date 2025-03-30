@@ -1,9 +1,41 @@
-import str2bool from "@liplum/str2bool"
 import { createLateinitGetter } from "./shared.js"
 import { getValueFromStore, missingEnvError } from "./utils.js"
 import { NodeEnv } from "./node.js"
-import { IEnv, IEnvCreator, DefaultValue, IStringEnv, IBoolEnv, IIntEnv, IFloatEnv, IPortEnv, IArrayEnv, IUrlEnv, Constructor, EnvObj, EnvStore, IEnvObj, BoolEnvValueOptions } from "./model.js"
+import { IArrayEnv, ArrayEnv } from "./env/array.js"
+import { IBoolEnv, BoolEnv } from "./env/bool.js"
+import { IFloatEnv, FloatEnv } from "./env/float.js"
+import { IIntEnv, IntEnv } from "./env/int.js"
+import { IPortEnv, PortEnv } from "./env/port.js"
+import { IStringEnv, StringEnv } from "./env/string.js"
+import { IUrlEnv, UrlEnv } from "./env/url.js"
+import { IEnv, DefaultValue, Constructor, EnvStore } from "./model.js"
 export * from "./model.js"
+export {
+  IArrayEnv,
+  IBoolEnv,
+  IFloatEnv,
+  IIntEnv,
+  IPortEnv,
+  IStringEnv,
+  IUrlEnv,
+}
+
+export interface IEnvCreator {
+  string: (options?: { default?: DefaultValue<string> }) => IStringEnv
+  bool: (options?: { default?: DefaultValue<boolean> }) => IBoolEnv
+  int: (options?: { default?: DefaultValue<number> }) => IIntEnv
+  float: (options?: { default?: DefaultValue<number> }) => IFloatEnv
+  port: (options?: { default?: DefaultValue<number> }) => IPortEnv
+  array: (options?: { default?: DefaultValue<string[]> }) => IArrayEnv
+  url: (options?: { default?: DefaultValue<URL | string> }) => IUrlEnv
+}
+
+export type IEnvObj = IEnv & IEnvCreator
+
+export interface EnvObj extends IEnvObj {
+  readonly key: string
+  from: (store: EnvStore) => EnvObj
+}
 
 const mixinWithValueEnvs = <TBase extends (new (...args: any[]) => IEnv)>(Base: TBase) => {
   return class MixinWithValueEnvs extends Base implements IEnvCreator {
@@ -123,174 +155,6 @@ const EnvFromValue: Constructor<IEnvObj> = mixinWithValueEnvs(class implements I
     return this.value
   }
 })
-
-class EnvMixin<TDefault> {
-  protected readonly env: IEnv
-  protected readonly defaultValue?: () => TDefault
-  constructor(env: IEnv, defaultValue?: () => TDefault) {
-    this.env = env
-    this.defaultValue = defaultValue
-  }
-  protected getDefaultValue = (): TDefault | undefined => {
-    return this.defaultValue?.()
-  }
-  protected missingEnvError = (): Error => {
-    return missingEnvError(this.env.key)
-  }
-}
-
-class StringEnv extends EnvMixin<string> implements IStringEnv {
-  getOrNull = (): string | undefined => {
-    const raw = this.env.getOrNull()
-    if (raw === undefined) {
-      return this.getDefaultValue()
-    }
-    return raw
-  }
-  get = (): string => {
-    const result = this.getOrNull()
-    if (result === undefined) {
-      throw this.missingEnvError()
-    }
-    return result
-  }
-}
-
-class BoolEnv extends EnvMixin<boolean> implements IBoolEnv {
-  getOrNull = (options?: BoolEnvValueOptions) => {
-    const raw = this.env.getOrNull()
-    if (raw === undefined) {
-      return this.getDefaultValue()
-    }
-    return str2bool(raw, {
-      strict: false,
-      ...options
-    })
-  }
-  get = (options?: BoolEnvValueOptions) => {
-    const result = this.getOrNull(options)
-    if (result === undefined) {
-      throw this.missingEnvError()
-    }
-    return result
-  }
-}
-
-class IntEnv extends EnvMixin<number> implements IIntEnv {
-  getOrNull = (radix?: number) => {
-    const raw = this.env.getOrNull()
-    if (raw === undefined) {
-      return this.getDefaultValue()
-    }
-    return parseInt(raw, radix)
-  }
-  get = (radix?: number) => {
-    const result = this.getOrNull(radix)
-    if (result === undefined) {
-      throw this.missingEnvError()
-    }
-    return result
-  }
-}
-
-
-class FloatEnv extends EnvMixin<number> implements IFloatEnv {
-  getOrNull = () => {
-    const raw = this.env.getOrNull()
-    if (raw === undefined) {
-      return this.getDefaultValue()
-    }
-    return parseFloat(raw)
-  }
-  get = () => {
-    const result = this.getOrNull()
-    if (result === undefined) {
-      throw this.missingEnvError()
-    }
-    return result
-  }
-}
-
-const checkPort = (p: number) => {
-  return 0 <= p && p <= 65535
-}
-
-class PortEnv extends EnvMixin<number> implements IPortEnv {
-  getOrNull = () => {
-    const raw = this.env.getOrNull()
-    if (raw === undefined) {
-      return this.getDefaultValue()
-    }
-    const result = parseInt(raw)
-    if (!checkPort(result)) {
-      throw new Error(`${result} is not a valid port number between 0 and 65535.`)
-    }
-    return result
-  }
-  get = () => {
-    const result = this.getOrNull()
-    if (result === undefined) {
-      throw this.missingEnvError()
-    }
-    return result
-  }
-}
-
-
-const defaultArraySpliter = /\s|,|\r|\n|\r\n/
-class ArrayEnv extends EnvMixin<string[]> implements IArrayEnv {
-  getOrNull = (splitter: string | RegExp = defaultArraySpliter) => {
-    const raw = this.env.getOrNull()
-    if (raw === undefined) {
-      return this.getDefaultValue()
-    }
-    const vars = raw.split(splitter)
-    return vars.filter(v => Boolean(v))
-  }
-  get = (splitter: string | RegExp = defaultArraySpliter) => {
-    const result = this.getOrNull(splitter)
-    if (result === undefined) {
-      throw this.missingEnvError()
-    }
-    return result
-  }
-}
-
-class UrlEnv extends EnvMixin<URL | string> implements IUrlEnv {
-  getOrNull = () => {
-    const raw = this.env.getOrNull() ?? this.getDefaultValue()
-    if (raw === undefined) {
-      return
-    }
-    try {
-      const result = new URL(raw)
-      return result
-    } catch (error) {
-      throw new Error(`${raw} is not a valid URL.`)
-    }
-  }
-  get = () => {
-    const result = this.getOrNull()
-    if (result === undefined) {
-      throw this.missingEnvError()
-    }
-    return result
-  }
-  getStringOrNull = () => {
-    const result = this.getOrNull()
-    if (result === undefined) {
-      return
-    }
-    return result.toString()
-  }
-  getString = () => {
-    const result = this.getStringOrNull()
-    if (result === undefined) {
-      throw this.missingEnvError()
-    }
-    return result
-  }
-}
 
 const env = (key: string): EnvObj => {
   return new Env({ key })
